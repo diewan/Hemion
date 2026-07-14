@@ -1,0 +1,6 @@
+# The active development shell exposes Conda's cross-style GCC as `cc`.
+# That linker does not search the host GTK/WebKit library directories required
+# by Dioxus Desktop. Keep Linux desktop builds on the system toolchain.
+[target.x86_64-unknown-linux-gnu]
+linker = "/usr/bin/cc"
+ar = "/usr/bin/ar"

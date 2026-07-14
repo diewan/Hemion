@@ -1,0 +1,72 @@
+//! Cross-chain transfers list page.
+
+use crate::context::use_wallet_context;
+use crate::pages::common::*;
+use crate::routes::Route;
+use dioxus::prelude::*;
+
+#[component]
+pub fn CrossChain() -> Element {
+    let wallet_ctx = use_wallet_context();
+    let transfers = wallet_ctx.transfers();
+
+    rsx! {
+        div { class: "space-y-6",
+            div { class: "flex items-center justify-between",
+                h1 { class: "text-2xl font-bold", "Cross-ChainId Transfers" }
+                Link { to: Route::CrossChainTransfer {}, class: "{btn_primary_class()}", "+ New Transfer" }
+            }
+
+            if transfers.is_empty() {
+                {empty_state("\u{21C4}", "No transfers recorded", "Start a cross-chain transfer to move Sanads between chains.")}
+            } else {
+                div { class: "{table_class()}",
+                    div { class: "{card_header_class()} flex items-center justify-between",
+                        h2 { class: "font-semibold text-sm", "Transfers" }
+                        span { class: "text-xs text-gray-400", "{transfers.len()} total" }
+                    }
+                    div { class: "overflow-x-auto",
+                        table { class: "w-full text-sm",
+                            thead {
+                                tr { class: "text-left text-gray-400 border-b border-gray-800",
+                                    th { class: "px-4 py-2 font-medium", "Transfer ID" }
+                                    th { class: "px-4 py-2 font-medium", "From" }
+                                    th { class: "px-4 py-2 font-medium", "To" }
+                                    th { class: "px-4 py-2 font-medium", "Sanad ID" }
+                                    th { class: "px-4 py-2 font-medium", "Status" }
+                                    th { class: "px-4 py-2 font-medium", "" }
+                                }
+                            }
+                            tbody { class: "divide-y divide-gray-800",
+                                for (idx, t) in transfers.iter().enumerate() {
+                                    tr { key: "{idx}-{t.id}", class: "hover:bg-gray-800/50 transition-colors",
+                                        td { class: "px-4 py-3",
+                                            Link { to: Route::TransferDetail { id: t.id.clone() },
+                                                class: "font-mono text-xs text-blue-400 hover:text-blue-300",
+                                                "{truncate_address(&t.id, 6)}"
+                                            }
+                                        }
+                                        td { class: "px-4 py-3", span { class: "{chain_badge_class(&t.source_chain)}", "{chain_icon_emoji(&t.source_chain)}" } }
+                                        td { class: "px-4 py-3", span { class: "{chain_badge_class(&t.dest_chain)}", "{chain_icon_emoji(&t.dest_chain)}" } }
+                                        td { class: "px-4 py-3 font-mono text-xs", "{truncate_address(&t.sanad_id, 8)}" }
+                                        td { class: "px-4 py-3",
+                                            span { class: "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {transfer_status_class(&t.status)}",
+                                                "{t.status}"
+                                            }
+                                        }
+                                        td { class: "px-4 py-3",
+                                            Link { to: Route::TransferDetail { id: t.id.clone() },
+                                                class: "text-xs text-blue-400 hover:text-blue-300",
+                                                "View Details \u{2192}"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

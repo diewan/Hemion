@@ -1,0 +1,248 @@
+//! Browser wallet connection hook.
+
+use crate::services::blockchain::{BrowserWallet, WalletType, wallet_connection};
+use csv_hash::ChainId;
+use dioxus::prelude::*;
+
+/// Wallet connection state.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WalletConnectionState {
+    pub wallet: Option<BrowserWallet>,
+    pub connecting: bool,
+    pub error: Option<String>,
+    pub chain: ChainId,
+}
+
+impl Default for WalletConnectionState {
+    fn default() -> Self {
+        Self {
+            wallet: None,
+            connecting: false,
+            error: None,
+            chain: ChainId::new("ethereum"),
+        }
+    }
+}
+
+/// Wallet connection context.
+#[derive(Clone)]
+pub struct WalletConnectionContext {
+    state: Signal<WalletConnectionState>,
+}
+
+impl WalletConnectionContext {
+    pub fn wallet(&self) -> Option<BrowserWallet> {
+        self.state.read().wallet.clone()
+    }
+
+    pub fn is_connected(&self) -> bool {
+        self.state.read().wallet.is_some()
+    }
+
+    pub fn is_connecting(&self) -> bool {
+        self.state.read().connecting
+    }
+
+    pub fn error(&self) -> Option<String> {
+        self.state.read().error.clone()
+    }
+
+    pub fn clear_error(&mut self) {
+        self.state.write().error = None;
+    }
+
+    /// Connect to MetaMask (Ethereum).
+    pub async fn connect_metamask(&mut self) {
+        let mut state = self.state.write();
+        state.connecting = true;
+        state.error = None;
+        drop(state);
+
+        if !wallet_connection::is_metamask_installed() {
+            self.state.write().error =
+                Some("MetaMask not installed. Please install it from metamask.io".to_string());
+            self.state.write().connecting = false;
+            return;
+        }
+
+        match wallet_connection::connect_metamask().await {
+            Ok(native_wallet) => {
+                let mut state = self.state.write();
+                state.wallet = Some(crate::services::blockchain::BrowserWallet {
+                    address: native_wallet.address,
+                    chain: Some(ChainId::new("ethereum")),
+                    wallet_type: WalletType::MetaMask,
+                });
+                state.chain = ChainId::new("ethereum");
+                state.connecting = false;
+            }
+            Err(e) => {
+                let mut state = self.state.write();
+                state.error = Some(e);
+                state.connecting = false;
+            }
+        }
+    }
+
+    /// Connect to Phantom (Solana).
+    pub async fn connect_phantom(&mut self) {
+        let mut state = self.state.write();
+        state.connecting = true;
+        state.error = None;
+        drop(state);
+
+        if !wallet_connection::is_phantom_installed() {
+            self.state.write().error =
+                Some("Phantom not installed. Please install it from phantom.app".to_string());
+            self.state.write().connecting = false;
+            return;
+        }
+
+        let mut state = self.state.write();
+        state.error = Some(
+            "Phantom connection is unavailable: this build has no typed Phantom signing port."
+                .to_string(),
+        );
+        state.connecting = false;
+    }
+
+    /// Disconnect wallet.
+    pub fn disconnect(&mut self) {
+        self.state.write().wallet = None;
+        self.state.write().error = None;
+    }
+
+    /// Get recommended wallet type for a chain.
+    pub fn recommended_wallet(&self, chain: ChainId) -> WalletType {
+        wallet_connection::recommended_wallet(chain)
+    }
+
+    /// Check if wallet is installed.
+    pub fn is_wallet_installed(&self, wallet_type: &WalletType) -> bool {
+        match wallet_type {
+            WalletType::MetaMask => wallet_connection::is_metamask_installed(),
+            WalletType::Phantom => wallet_connection::is_phantom_installed(),
+            _ => false,
+        }
+    }
+}
+
+/// Wallet connection provider component.
+#[component]
+pub fn WalletConnectionProvider(children: Element) -> Element {
+    let state = use_signal(WalletConnectionState::default);
+
+    use_context_provider(|| WalletConnectionContext { state });
+
+    rsx! { { children } }
+}
+
+/// Hook to access wallet connection context.
+pub fn use_wallet_connection() -> WalletConnectionContext {
+    use_context::<WalletConnectionContext>()
+}
+
+/// Component to show wallet connection button.
+#[component]
+pub fn WalletConnectButton(chain: ChainId) -> Element {
+    let mut wallet_ctx = use_wallet_connection();
+    let state = wallet_ctx.state;
+
+    let chain_for_recommended = chain.clone();
+    let wallet_type = wallet_ctx.recommended_wallet(chain_for_recommended);
+    let is_installed = wallet_ctx.is_wallet_installed(&wallet_type);
+    let is_connected = wallet_ctx.is_connected();
+    let connecting = wallet_ctx.is_connecting();
+    let is_supported = matches!(chain.as_str(), "ethereum");
+
+    let button_text = if connecting {
+        "Connecting...".to_string()
+    } else if is_connected {
+        format!(
+            "Connected ({})",
+            state
+                .read()
+                .wallet
+                .as_ref()
+                .map(|w| truncate_address(&w.address, 4))
+                .unwrap_or_default()
+        )
+    } else if !is_supported {
+        format!("{} connection coming soon", wallet_type_name(&wallet_type))
+    } else {
+        format!("Connect {}", wallet_type_name(&wallet_type))
+    };
+
+    let button_class = if is_connected {
+        "px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors"
+    } else if !is_supported || !is_installed {
+        "px-4 py-2 bg-gray-600 rounded-lg text-sm font-medium opacity-50 cursor-not-allowed"
+    } else {
+        "px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
+    };
+
+    rsx! {
+        div { class: "space-y-2",
+            button {
+                onclick: move |_| {
+                    if is_connected {
+                        wallet_ctx.disconnect();
+                    } else if is_supported && is_installed {
+                        match chain.as_str() {
+                            "ethereum" => {
+                                let mut ctx = wallet_ctx.clone();
+                                spawn(async move {
+                                    ctx.connect_metamask().await;
+                                });
+                            }
+                            "solana" => {
+                                let mut ctx = wallet_ctx.clone();
+                                spawn(async move {
+                                    ctx.connect_phantom().await;
+                                });
+                            }
+                            _ => {}
+                        }
+                    }
+                },
+                disabled: connecting || (!is_supported && !is_connected) || (!is_installed && !is_connected),
+                class: "{button_class}",
+                "{button_text}"
+            }
+
+            if let Some(error) = state.read().error.clone() {
+                div { class: "text-xs text-red-400", "{error}" }
+            }
+
+            if !is_supported && !is_connected {
+                div { class: "text-xs text-gray-500", "Connection and signing support for this chain is not available in this build." }
+            } else if !is_installed && !is_connected {
+                div { class: "text-xs text-gray-500",
+                    "Install {wallet_type_name(&wallet_type)} to continue"
+                }
+            }
+        }
+    }
+}
+
+fn wallet_type_name(wallet_type: &WalletType) -> String {
+    match wallet_type {
+        WalletType::MetaMask => "MetaMask".to_string(),
+        WalletType::Phantom => "Phantom".to_string(),
+        WalletType::SuiWallet => "Sui Wallet".to_string(),
+        WalletType::AptosWallet => "Aptos Wallet".to_string(),
+        WalletType::SolanaWallet => "Solana Wallet".to_string(),
+        WalletType::Petra => "Petra".to_string(),
+        WalletType::Leather => "Leather".to_string(),
+        WalletType::Native => "Native".to_string(),
+        WalletType::Custom => "Custom".to_string(),
+    }
+}
+
+fn truncate_address(addr: &str, chars: usize) -> String {
+    if addr.len() <= chars * 2 + 3 {
+        addr.to_string()
+    } else {
+        format!("{}...{}", &addr[..chars + 2], &addr[addr.len() - chars..])
+    }
+}

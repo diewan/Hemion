@@ -1,0 +1,2 @@
+# Clippy settings belong here only when they configure a lint's behaviour.
+# Lint levels are configured in Cargo.toml under `[lints.clippy]`.

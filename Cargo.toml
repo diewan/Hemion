@@ -1,0 +1,127 @@
+[package]
+name = "hemion"
+version = "0.1.0"
+edition = "2024"
+description = "Standalone multi-chain wallet for CSV Protocol with Dioxus UI"
+license = "MIT OR Apache-2.0"
+authors = ["Amin Razavi"]
+repository = "https://github.com/client-side-validation/csv-protocol"
+homepage = "https://github.com/client-side-validation/csv-protocol"
+readme = "README.md"
+publish = false
+
+[[bin]]
+name = "hemion"
+path = "src/main.rs"
+
+[dependencies]
+# Core CSV Protocol types (resolved against ../csv-protocol)
+csv-verifier = { path = "../../csv-protocol/csv-verifier" }
+csv-store = { path = "../../csv-protocol/csv-store", default-features = false, features = ["browser-storage", "encrypted-storage"] }
+csv-keys = { path = "../../csv-protocol/csv-keys", features = ["wasm", "production"] }
+# Canonical identity and protocol-version authorities. The wallet imports these
+# directly rather than rebuilding a compatibility facade over the retired core.
+csv-hash = { path = "../../csv-protocol/csv-hash", features = ["serde"] }
+csv-protocol = { path = "../../csv-protocol/csv-protocol" }
+# The wallet exchanges only versioned application-contract artifacts.  Wire and
+# canonical codec are explicit dependencies so this boundary is auditable.
+csv-wire = { path = "../../csv-protocol/csv-wire" }
+csv-codec = { path = "../../csv-protocol/csv-codec" }
+# The portable, encrypted wallet envelope shared with csv-cli.  The package is
+csv-wallet = { package = "csv-wallet", path = "../../csv-protocol/csv-wallet", features = ["wasm"] }
+
+# Dioxus UI
+dioxus = { version = "0.7", features = ["web", "router"] }
+
+# Cryptography - wasm compatible
+getrandom = { workspace = true }
+secp256k1 = { version = "0.29", features = ["rand-std", "global-context"] }
+ed25519-dalek = { version = "2.0", features = ["rand_core"] }
+sha2 = "0.10"
+sha3 = "0.10"
+blake2 = "0.10"
+hex = "0.4.3"
+bs58 = "0.5"
+rand = { version = "0.8", features = ["std"] }
+bip32 = { version = "0.5", features = ["std", "mnemonic"] }
+bitcoin = { version = "0.32", default-features = false, features = ["serde", "rand-std", "std"] }
+
+# Ethereum RLP encoding
+rlp = "0.5"
+ethereum-types = "0.14"
+
+# Encryption
+aes-gcm = "0.10"
+argon2 = "0.5"
+zeroize = { version = "1.7", features = ["derive"] }
+
+# Async utilities
+futures = "0.3"
+tracing = "0.1"
+async-trait = "0.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Utilities
+thiserror = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde", "js"] }
+
+# Web/wasm
+console_error_panic_hook = "0.1"
+web-sys = { workspace = true, features = ["Window", "Storage", "Document", "Element", "HtmlInputElement", "FileReader", "Blob", "BlobPropertyBag", "Url", "HtmlAnchorElement", "File", "FileList", "ProgressEvent", "Navigator", "DataTransfer", "Event", "DragEvent", "Clipboard", "Request", "RequestInit", "RequestMode", "RequestCredentials", "Headers", "Response"] }
+wasm-bindgen = "0.2.93"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3.70"
+gloo-timers = { workspace = true, features = ["futures"] }
+serde-wasm-bindgen = "0.6"
+
+# BCS encoding
+bcs = "0.1"
+
+# Base64 for Solana
+base64 = "0.21"
+
+# Native-only dependencies
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+csv-runtime = { path = "../../csv-protocol/csv-runtime", optional = true }
+csv-sdk = { path = "../../csv-protocol/csv-sdk", features = ["bitcoin", "tokio", "wallet", "runtime-coordinator"] }
+tokio = { version = "1.0", features = ["macros", "rt", "sync", "time"] }
+tokio-tungstenite = { version = "0.20", optional = true }
+reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
+dirs = "5.0"
+
+# WASM-only dependencies
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+csv-sdk = { path = "../../csv-protocol/csv-sdk", default-features = false, features = ["wasm"] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+serial_test = "3.0"
+# APPS-CONFORMANCE-015: cross-application fixtures exercise the same public
+# contracts that the CLI consumes.  These remain test-only; they do not give
+# the presentation layer protocol authority.
+csv-explorer-shared = { path = "../csv-explorer/shared" }
+csv-testkit = { path = "../../csv-protocol/csv-testkit" }
+
+[features]
+default = ["native"]
+native = ["dep:csv-runtime", "dep:reqwest", "dep:tokio-tungstenite"]
+csv-bitcoin = ["csv-sdk/bitcoin"]
+csv-ethereum = ["csv-sdk/ethereum"]
+
+# Hemion is checked out independently from the umbrella application workspace.
+# Declaring its own workspace prevents Cargo from inheriting the parent
+# workspace, which still lists a removed `csv-wallet` member.
+[workspace]
+resolver = "2"
+
+[workspace.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+web-sys = { version = "0.3", features = ["Window", "console"] }
+gloo-timers = { version = "0.3", features = ["futures"] }
+
+[patch.crates-io]
+spl-token-2022-interface = { path = "../../csv-protocol/third_party/spl-token-2022-interface" }
