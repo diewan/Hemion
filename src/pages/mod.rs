@@ -25,6 +25,7 @@ pub mod wallet_page;
 pub mod accounts;
 pub mod cross_chain;
 pub mod proofs;
+pub mod redirect;
 pub mod sanads;
 pub mod seals;
 pub mod settings;
@@ -44,6 +45,21 @@ pub use sanads::{ConsumeSanad, CreateSanad, SanadJourney, Sanads, ShowSanad, Tra
 
 // Re-exports from proofs module
 pub use proofs::{GenerateProof, ProofBundlePage, Proofs, VerifyCrossChainProof, VerifyProof};
+pub use redirect::{
+    Activity, ActivityAccountTransactions, ActivityMove, ActivityRetry, ActivityStatus,
+    ActivityTransactionDetail, ActivityTransferDetail, AssetCollectibleDetail, AssetCollectibles,
+    AssetCollections, AssetConsume, AssetCreate, AssetDetail, AssetJourney, AssetSealConsume,
+    AssetSealCreate, AssetSealRegistry, AssetSealVerify, AssetSeals, AssetTransfer, AssetWallet,
+    Assets, Contacts, LegacyAccountTransactions, LegacyConsumeSanad, LegacyConsumeSeal,
+    LegacyCreateSanad, LegacyCreateSeal, LegacyCrossChain, LegacyCrossChainRetry,
+    LegacyCrossChainStatus, LegacyCrossChainTransfer, LegacyNftCollections, LegacyNftDetail,
+    LegacyNftGallery, LegacyOfflineVerify, LegacyProofs, LegacySanadJourney, LegacySanads,
+    LegacySealRegistry, LegacySeals, LegacyShowSanad, LegacyTransactionDetail, LegacyTransactions,
+    LegacyTransferDetail, LegacyTransferSanad, LegacyValidate, LegacyValidateCommitmentChain,
+    LegacyValidateConsignment, LegacyValidateProof, LegacyValidateSeal,
+    LegacyVerifyCrossChainProof, LegacyVerifyProof, LegacyVerifySeal, LegacyWalletPage,
+    RedirectProofBundle, RedirectToAdvanced,
+};
 
 // Re-exports from cross_chain module
 pub use cross_chain::{CrossChain, CrossChainRetry, CrossChainStatus, CrossChainTransfer};
@@ -64,7 +80,7 @@ pub use zk_proofs::{ZkGenerateProof, ZkVerifyProof};
 pub use transactions::{TransactionDetail, Transactions};
 
 // Re-exports from settings module
-pub use settings::Settings;
+pub use settings::{Settings, SettingsAdvanced};
 
 // Common UI helpers - re-export everything from common module for convenience
 

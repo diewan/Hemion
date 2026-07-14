@@ -1,5 +1,6 @@
 //! Cross-chain transfer page.
 
+use crate::components::{Inspector, TransferReview, TransferReviewIntent};
 use crate::context::{SanadStatus, TransferLifecycleView, use_wallet_context};
 use crate::pages::common::*;
 use crate::routes::Route;
@@ -55,6 +56,8 @@ pub fn CrossChainTransfer() -> Element {
     let mut selected_account_index = use_signal(|| 0usize);
     let mut selected_target_contract_index = use_signal(|| 0usize);
     let mut lifecycle = use_signal(|| Option::<TransferLifecycleView>::None);
+    let mut review_open = use_signal(|| false);
+    let mut review_approved = use_signal(|| false);
 
     // Get sanads for the source chain (filtered to active only)
     let from_chain_val = from_chain.read().clone();
@@ -161,7 +164,13 @@ pub fn CrossChainTransfer() -> Element {
     });
 
     // Execute real cross-chain transfer using native signing
-    let execute_transfer = move |_| {
+    let mut execute_transfer = move || {
+        if !review_approved() {
+            error.set(Some(
+                "A value-bearing transfer must be confirmed on the review screen.".to_string(),
+            ));
+            return;
+        }
         if !_has_source_contract {
             error.set(Some(format!(
                 "No contract deployed on {:?}. Deploy contracts manually using Foundry/forge and set the address with `csv contracts set {} <address>`.",
@@ -309,10 +318,47 @@ pub fn CrossChainTransfer() -> Element {
         });
     };
 
+    let review_preflight_ok = has_sanads
+        && has_account
+        && !is_watch_only
+        && has_target_contract
+        && has_dest_account
+        && dest_has_enough_balance;
+    let selected_sanad = sanads_for_source.get(*selected_sanad_index.read());
+    let review_intent = TransferReviewIntent {
+        origin: None,
+        signer: selected_account.map(|account| account.address.clone()).unwrap_or_else(|| "No source account selected".to_string()),
+        source_chain: from_chain.read().to_string(),
+        destination_chain: to_chain.read().to_string(),
+        recipient: if dest_owner.read().is_empty() { selected_account.map(|account| account.address.clone()).unwrap_or_else(|| "No recipient available".to_string()) } else { dest_owner.read().clone() },
+        asset: "Sanad".to_string(),
+        amount: selected_sanad.map(|sanad| sanad.value.to_string()).unwrap_or_else(|| "No sanad selected".to_string()),
+        fee: "Calculated by the runtime before submission".to_string(),
+        fee_provenance: "estimated",
+        preflight_ok: review_preflight_ok,
+        corrective_action: (!review_preflight_ok).then(|| "Add the required accounts/contracts and fund the destination gas account, then review again.".to_string()),
+        unknown_recipient: true,
+        unknown_contract: !has_target_contract,
+    };
+
+    if review_open() {
+        return rsx! {
+            TransferReview {
+                intent: review_intent,
+                on_back: move |_| review_open.set(false),
+                on_confirm: move |_| {
+                    review_approved.set(true);
+                    review_open.set(false);
+                    execute_transfer();
+                },
+            }
+        };
+    }
+
     rsx! {
         div { class: "max-w-2xl space-y-6",
             div { class: "flex items-center gap-3",
-                Link { to: Route::CrossChain {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
+                Link { to: Route::Activity {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
                 h1 { class: "text-xl font-bold", "Cross-ChainId Transfer" }
             }
 
@@ -475,7 +521,7 @@ pub fn CrossChainTransfer() -> Element {
                 })}
 
                 if let Some(view) = lifecycle.read().as_ref() {
-                    {lifecycle_panel(view.clone())}
+                    Inspector { lifecycle: Some(view.clone()) }
                 }
 
                 if let Some(err) = error.read().as_ref() {
@@ -491,14 +537,8 @@ pub fn CrossChainTransfer() -> Element {
                 }
 
                 button {
-                    onclick: execute_transfer,
-                    disabled: *executing.read()
-                        || !has_sanads
-                        || !has_account
-                        || is_watch_only
-                        || !has_target_contract
-                        || !has_dest_account
-                        || !dest_has_enough_balance,
+                    onclick: move |_| { review_approved.set(false); review_open.set(true); },
+                    disabled: *executing.read(),
                     class: "{btn_full_primary_class()}",
                     if *executing.read() {
                         "Executing..."
@@ -515,7 +555,7 @@ pub fn CrossChainTransfer() -> Element {
                     } else if !dest_has_enough_balance {
                         "Fund Destination Account"
                     } else {
-                        "Execute Cross-ChainId Transfer"
+                        "Review Cross-ChainId Transfer"
                     }
                 }
 
@@ -627,10 +667,10 @@ fn lifecycle_panel(view: TransferLifecycleView) -> Element {
             if view.allows_resume() || view.allows_retry() {
                 div { class: "flex gap-3",
                     if view.allows_resume() {
-                        Link { to: Route::CrossChainRetry {}, class: "text-sm text-blue-400 hover:text-blue-300", "Resume via runtime \u{2192}" }
+                        Link { to: Route::ActivityRetry {}, class: "text-sm text-blue-400 hover:text-blue-300", "Resume via runtime \u{2192}" }
                     }
                     if view.allows_retry() {
-                        Link { to: Route::CrossChainRetry {}, class: "text-sm text-yellow-400 hover:text-yellow-300", "Retry via runtime \u{2192}" }
+                        Link { to: Route::ActivityRetry {}, class: "text-sm text-yellow-400 hover:text-yellow-300", "Retry via runtime \u{2192}" }
                     }
                 }
             }

@@ -1,0 +1,60 @@
+name: Hemion build parity
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  native:
+    name: Native build and tests
+    runs-on: ubuntu-latest
+    steps:
+      # Hemion is an independent repository whose local development manifest
+      # intentionally resolves protocol crates from ../../csv-protocol.
+      # Recreate that exact sibling layout in CI so a fresh runner proves the
+      # same dependency boundary as a developer checkout.
+      - name: Check out Hemion
+        uses: actions/checkout@v4
+        with:
+          path: csv-apps/hemion
+      - name: Check out CSV Protocol dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: client-side-validation/csv-protocol
+          path: csv-protocol
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build native wallet
+        run: cargo check --manifest-path csv-apps/hemion/Cargo.toml
+      - name: Run native tests
+        run: cargo test --manifest-path csv-apps/hemion/Cargo.toml --all-targets
+
+  wasm:
+    name: WASM build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Hemion
+        uses: actions/checkout@v4
+        with:
+          path: csv-apps/hemion
+      - name: Check out CSV Protocol dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: client-side-validation/csv-protocol
+          path: csv-protocol
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Reject platform branches in pages
+        run: cargo test --manifest-path csv-apps/hemion/Cargo.toml --test architecture_boundaries page_code_has_no_target_arch_branches
+      - name: Build the reduced WASM feature set
+        run: cargo check --manifest-path csv-apps/hemion/Cargo.toml --target wasm32-unknown-unknown --no-default-features
+
+  # SPK-002 recorded a conditional Android go and no iOS validation. Do not
+  # enable this job until both native platform slices have reproducible
+  # emulator/simulator smoke tests; iOS requires a macOS/Xcode runner.
+  mobile:
+    name: Mobile slice (gated by SPK-002)
+    if: ${{ false }}
+    runs-on: macos-latest
+    steps:
+      - run: echo 'Enable only after Android and iOS slice acceptance.'

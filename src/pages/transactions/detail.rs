@@ -1,5 +1,6 @@
 //! Transaction detail page.
 
+use crate::components::Inspector;
 use crate::context::use_wallet_context;
 use crate::pages::common::*;
 use crate::routes::Route;
@@ -23,8 +24,9 @@ pub fn TransactionDetail(id: String) -> Element {
             div { class: "space-y-6",
                 div { class: "flex items-center justify-between",
                     h1 { class: "text-2xl font-bold", "Transaction Details" }
-                    Link { to: Route::Transactions {}, class: "text-sm text-blue-400 hover:text-blue-300", "\u{2190} Back" }
+                    Link { to: Route::Activity {}, class: "text-sm text-blue-400 hover:text-blue-300", "\u{2190} Back" }
                 }
+                Inspector { lifecycle: None }
 
                 div { class: "{card_class()} p-6 space-y-6",
                     div { class: "flex items-center justify-between pb-6 border-b border-gray-800",
@@ -84,7 +86,7 @@ pub fn TransactionDetail(id: String) -> Element {
                 h1 { class: "text-2xl font-bold", "Transaction Details" }
                 div { class: "{card_class()} p-6",
                     p { class: "text-gray-400", "Transaction not found." }
-                    Link { to: Route::Transactions {}, class: "text-blue-400 hover:text-blue-300 text-sm", "\u{2190} Back to Transactions" }
+                    Link { to: Route::Activity {}, class: "text-blue-400 hover:text-blue-300 text-sm", "\u{2190} Back to Transactions" }
                 }
             }
         }

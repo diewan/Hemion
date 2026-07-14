@@ -162,6 +162,8 @@ fn wallet_import_export_uses_only_the_shared_encrypted_envelope() {
         .expect("wallet context must be readable");
     let page = fs::read_to_string(source_root().join("pages/wallet_page.rs"))
         .expect("wallet page must be readable");
+    let platform = fs::read_to_string(source_root().join("services/platform.rs"))
+        .expect("platform file adapter must be readable");
 
     assert!(
         source.contains("format::encrypt") && source.contains("format::decrypt"),
@@ -172,8 +174,10 @@ fn wallet_import_export_uses_only_the_shared_encrypted_envelope() {
         "wallet must not retain a plaintext JSON import/export path"
     );
     assert!(
-        page.contains("read_as_array_buffer") && !page.contains("read_as_text"),
-        "web import must keep the encrypted file as bytes rather than UI text"
+        page.contains("read_bytes().await")
+            && !platform.contains("read_as_text")
+            && !page.contains("read_as_text"),
+        "the web file adapter must keep the encrypted file as bytes rather than UI text"
     );
 }
 
@@ -222,6 +226,19 @@ fn presentation_uses_explicit_platform_ports_without_wasm_placeholders() {
     assert!(
         violations.is_empty(),
         "wallet must not retain wasm placeholder behavior:\n{}",
+        violations.join("\n")
+    );
+}
+
+#[test]
+fn page_code_has_no_target_arch_branches() {
+    let violations = scan_rust_files(
+        &source_root().join("pages"),
+        &["cfg(target_arch", "cfg_attr(target_arch"],
+    );
+    assert!(
+        violations.is_empty(),
+        "page code must consume platform ports instead of selecting targets:\n{}",
         violations.join("\n")
     );
 }

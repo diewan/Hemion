@@ -47,7 +47,7 @@ pub fn Proofs() -> Element {
                                     tr { key: "{idx}-{proof.chain}-{proof.sanad_id}-{proof.proof_type}", class: "hover:bg-gray-800/50 transition-colors",
                                         td { class: "px-4 py-3", span { class: "{chain_badge_class(&proof.chain)}", "{chain_icon_emoji(&proof.chain)} {chain_name(&proof.chain)}" } }
                                         td { class: "px-4 py-3 font-mono text-xs",
-                                            Link { to: Route::SanadJourney { id: proof.sanad_id.clone() }, class: "text-purple-400 hover:text-purple-300",
+                                            Link { to: Route::AssetJourney { id: proof.sanad_id.clone() }, class: "text-purple-400 hover:text-purple-300",
                                                 "{proof_sanad_display(&proof)}"
                                             }
                                         }
@@ -112,7 +112,7 @@ pub fn Proofs() -> Element {
                                     div { class: "space-y-2",
                                         p { class: "text-sm text-gray-400", "Sanad ID" }
                                         p { class: "text-sm font-mono break-all",
-                                            Link { to: Route::SanadJourney { id: proof.sanad_id.clone() }, class: "text-purple-400 hover:text-purple-300",
+                                            Link { to: Route::AssetJourney { id: proof.sanad_id.clone() }, class: "text-purple-400 hover:text-purple-300",
                                                 "{&proof.sanad_id}"
                                             }
                                         }

@@ -29,7 +29,7 @@ pub fn CreateSeal() -> Element {
     rsx! {
         div { class: "max-w-2xl space-y-6",
             div { class: "flex items-center gap-3",
-                Link { to: Route::Seals {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
+                Link { to: Route::AssetSeals {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
                 h1 { class: "text-xl font-bold", "Create Seal" }
             }
 

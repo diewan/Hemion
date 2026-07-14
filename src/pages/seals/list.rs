@@ -30,7 +30,7 @@ pub fn Seals() -> Element {
         div { class: "space-y-6",
             div { class: "flex items-center justify-between",
                 h1 { class: "text-2xl font-bold", "Seals" }
-                Link { to: Route::CreateSeal {}, class: "{btn_primary_class()}", "+ Create Seal" }
+                Link { to: Route::AssetSealCreate {}, class: "{btn_primary_class()}", "+ Create Seal" }
             }
 
             // Filter bar
@@ -73,7 +73,7 @@ pub fn Seals() -> Element {
                                         td { class: "px-4 py-3 font-mono text-xs", "{truncate_address(&seal.seal_ref, 12)}" }
                                         td { class: "px-4 py-3", span { class: "{chain_badge_class(&seal.chain)}", "{chain_icon_emoji(&seal.chain)} {chain_name(&seal.chain)}" } }
                                         td { class: "px-4 py-3 font-mono text-xs",
-                                            Link { to: Route::SanadJourney { id: seal.sanad_id.clone().unwrap_or_default() }, class: "text-purple-400 hover:text-purple-300",
+                                            Link { to: Route::AssetJourney { id: seal.sanad_id.clone().unwrap_or_default() }, class: "text-purple-400 hover:text-purple-300",
                                                 "{seal_sanad_display(seal)}"
                                             }
                                         }
@@ -100,7 +100,7 @@ pub fn Seals() -> Element {
                                                         let seal_ref_clone = seal.seal_ref.clone();
                                                         rsx! {
                                                             Link {
-                                                                to: Route::ConsumeSeal { seal_ref: Some(seal_ref_clone) },
+                                                                to: Route::AssetSealConsume { seal_ref: Some(seal_ref_clone) },
                                                                 class: "px-2 py-1 rounded text-xs bg-orange-900/30 text-orange-400 hover:bg-orange-900/50 transition-colors",
                                                                 "Consume"
                                                             }
@@ -153,7 +153,7 @@ pub fn Seals() -> Element {
                                    div { class: "space-y-2",
                                         p { class: "text-sm text-gray-400", "Protects Sanad" }
                                         p { class: "text-sm font-mono break-all",
-                                           Link { to: Route::SanadJourney { id: seal.sanad_id.clone().unwrap_or_default() }, class: "text-purple-400 hover:text-purple-300",
+                                           Link { to: Route::AssetJourney { id: seal.sanad_id.clone().unwrap_or_default() }, class: "text-purple-400 hover:text-purple-300",
                                                  "{seal_sanad_display(&seal)}"
 
                                              }

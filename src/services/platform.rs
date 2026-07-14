@@ -8,6 +8,8 @@ use async_trait::async_trait;
 use csv_hash::ChainId;
 use csv_sdk::contract::{ContractArtifact, SigningIntent};
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -37,6 +39,389 @@ pub enum PlatformError {
     NetworkMismatch { expected: String, actual: String },
     #[error("vault signing failed: {0}")]
     Vault(String),
+    #[error("inbound intent rejected: {0}")]
+    InboundIntent(String),
+    #[error("portable wallet file operation failed: {0}")]
+    PortableFile(String),
+}
+
+/// Presentation target used to report capability support honestly. Pages
+/// consume this service and never branch on compilation targets themselves.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PlatformTarget {
+    Desktop,
+    Web,
+    Mobile,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CapabilityState {
+    Supported,
+    RequiresRemoteRuntime,
+    Unavailable,
+}
+
+/// Per-target support matrix. `Unavailable` is a product state, not a signal
+/// to substitute simulated behavior.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PlatformCapabilities {
+    pub target: PlatformTarget,
+    pub file_exchange: CapabilityState,
+    pub camera_qr: CapabilityState,
+    pub deep_links: CapabilityState,
+    pub local_vault: CapabilityState,
+    pub runtime_orchestration: CapabilityState,
+    pub local_notifications: CapabilityState,
+    pub background_push: CapabilityState,
+}
+
+impl PlatformCapabilities {
+    pub const fn for_target(target: PlatformTarget) -> Self {
+        match target {
+            PlatformTarget::Desktop => Self {
+                target,
+                file_exchange: CapabilityState::Supported,
+                camera_qr: CapabilityState::Unavailable,
+                deep_links: CapabilityState::Supported,
+                local_vault: CapabilityState::Supported,
+                runtime_orchestration: CapabilityState::Supported,
+                local_notifications: CapabilityState::Supported,
+                background_push: CapabilityState::Unavailable,
+            },
+            PlatformTarget::Web => Self {
+                target,
+                file_exchange: CapabilityState::Supported,
+                camera_qr: CapabilityState::Unavailable,
+                deep_links: CapabilityState::Supported,
+                local_vault: CapabilityState::Supported,
+                runtime_orchestration: CapabilityState::RequiresRemoteRuntime,
+                local_notifications: CapabilityState::Supported,
+                background_push: CapabilityState::Unavailable,
+            },
+            PlatformTarget::Mobile => Self {
+                target,
+                file_exchange: CapabilityState::Unavailable,
+                camera_qr: CapabilityState::Unavailable,
+                deep_links: CapabilityState::Unavailable,
+                local_vault: CapabilityState::Unavailable,
+                runtime_orchestration: CapabilityState::RequiresRemoteRuntime,
+                local_notifications: CapabilityState::Unavailable,
+                background_push: CapabilityState::Unavailable,
+            },
+        }
+    }
+
+    pub const fn current() -> Self {
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self::for_target(PlatformTarget::Web)
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self::for_target(PlatformTarget::Desktop)
+        }
+    }
+}
+
+/// Maximum encoded inbound intent accepted before any decoder is invoked.
+/// This is deliberately small enough for local delivery channels and prevents
+/// QR/deep-link/file input from turning into an allocation attack.
+pub const MAX_INBOUND_INTENT_BYTES: usize = 64 * 1024;
+
+/// Where an untrusted delivery originated. The source is presentation data;
+/// it never changes what the canonical intent means or authorizes it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InboundOrigin {
+    ScannedQr,
+    BrowserLink,
+    ImportedFile,
+    Relay,
+}
+
+impl InboundOrigin {
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::ScannedQr => "scanned QR code",
+            Self::BrowserLink => "browser link",
+            Self::ImportedFile => "imported file",
+            Self::Relay => "encrypted relay",
+        }
+    }
+}
+
+/// A decoded, unapproved inbound request. Holding this value cannot mutate
+/// wallet state; callers must render it in the review/accept flow first.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InboundIntent {
+    pub id: String,
+    pub origin: InboundOrigin,
+    pub intent: SigningIntent,
+}
+
+impl InboundIntent {
+    /// Text rendered by the review surface; it is intentionally not supplied
+    /// by the untrusted package or deep-link query string.
+    pub fn origin_display(&self) -> String {
+        self.origin.label().to_string()
+    }
+}
+
+/// Result of passing an inbound package through the one delivery choke point.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InboundDelivery {
+    PendingReview(InboundIntent),
+    Duplicate { id: String },
+}
+
+/// Platform delivery boundary for QR, camera/share, files, deep links, and
+/// relays. Implementations must return an unapproved typed intent only.
+pub trait DeliveryPort {
+    fn receive(
+        &mut self,
+        origin: InboundOrigin,
+        payload: &[u8],
+        now: u64,
+    ) -> Result<InboundDelivery, PlatformError>;
+
+    fn receive_deep_link(&mut self, url: &str, now: u64) -> Result<InboundDelivery, PlatformError>;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PortableFileOutcome {
+    Saved,
+    Cancelled,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PortableOpenOutcome {
+    Opened(Vec<u8>),
+    Cancelled,
+}
+
+/// Platform-owned save boundary for encrypted portable wallet bytes. Pages
+/// never call browser APIs or native filesystem dialogs directly.
+pub trait PortableFilePort {
+    fn save_encrypted_wallet(
+        &self,
+        suggested_name: &str,
+        bytes: &[u8],
+    ) -> Result<PortableFileOutcome, PlatformError>;
+
+    fn open_encrypted_wallet(&self) -> Result<PortableOpenOutcome, PlatformError>;
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct PlatformPortableFilePort;
+
+#[cfg(not(target_arch = "wasm32"))]
+impl PortableFilePort for PlatformPortableFilePort {
+    fn save_encrypted_wallet(
+        &self,
+        suggested_name: &str,
+        bytes: &[u8],
+    ) -> Result<PortableFileOutcome, PlatformError> {
+        use std::io::Write;
+        #[cfg(unix)]
+        use std::os::unix::fs::OpenOptionsExt;
+
+        let Some(path) = rfd::FileDialog::new()
+            .add_filter("Encrypted CSV wallet", &["csvw"])
+            .set_file_name(suggested_name)
+            .save_file()
+        else {
+            return Ok(PortableFileOutcome::Cancelled);
+        };
+        let mut options = std::fs::OpenOptions::new();
+        options.create(true).truncate(true).write(true);
+        #[cfg(unix)]
+        options.mode(0o600);
+        let mut file = options
+            .open(path)
+            .map_err(|error| PlatformError::PortableFile(error.to_string()))?;
+        file.write_all(bytes)
+            .and_then(|_| file.sync_all())
+            .map_err(|error| PlatformError::PortableFile(error.to_string()))?;
+        Ok(PortableFileOutcome::Saved)
+    }
+
+    fn open_encrypted_wallet(&self) -> Result<PortableOpenOutcome, PlatformError> {
+        let Some(path) = rfd::FileDialog::new()
+            .add_filter("Encrypted CSV wallet", &["csvw"])
+            .pick_file()
+        else {
+            return Ok(PortableOpenOutcome::Cancelled);
+        };
+        let metadata = std::fs::metadata(&path)
+            .map_err(|error| PlatformError::PortableFile(error.to_string()))?;
+        if metadata.len() > 16 * 1024 * 1024 {
+            return Err(PlatformError::PortableFile(
+                "wallet file exceeds the 16 MiB import limit".to_string(),
+            ));
+        }
+        std::fs::read(path)
+            .map(PortableOpenOutcome::Opened)
+            .map_err(|error| PlatformError::PortableFile(error.to_string()))
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl PortableFilePort for PlatformPortableFilePort {
+    fn save_encrypted_wallet(
+        &self,
+        suggested_name: &str,
+        bytes: &[u8],
+    ) -> Result<PortableFileOutcome, PlatformError> {
+        use wasm_bindgen::JsCast;
+
+        let window = web_sys::window().ok_or(PlatformError::UnsupportedCapability {
+            platform: "web",
+            capability: "encrypted wallet download",
+        })?;
+        let options = web_sys::BlobPropertyBag::new();
+        options.set_type("application/octet-stream");
+        let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(
+            &js_sys::Array::from_iter([js_sys::Uint8Array::from(bytes)]),
+            &options,
+        )
+        .map_err(|error| PlatformError::PortableFile(format!("blob creation failed: {error:?}")))?;
+        let url = web_sys::Url::create_object_url_with_blob(&blob).map_err(|error| {
+            PlatformError::PortableFile(format!("download URL failed: {error:?}"))
+        })?;
+        let document = window
+            .document()
+            .ok_or(PlatformError::UnsupportedCapability {
+                platform: "web",
+                capability: "document download",
+            })?;
+        let element = document.create_element("a").map_err(|error| {
+            PlatformError::PortableFile(format!("download element failed: {error:?}"))
+        })?;
+        let anchor = element
+            .dyn_ref::<web_sys::HtmlAnchorElement>()
+            .ok_or_else(|| {
+                PlatformError::PortableFile("download element is not an anchor".to_string())
+            })?;
+        anchor.set_href(&url);
+        anchor.set_download(suggested_name);
+        anchor.click();
+        web_sys::Url::revoke_object_url(&url).map_err(|error| {
+            PlatformError::PortableFile(format!("download cleanup failed: {error:?}"))
+        })?;
+        Ok(PortableFileOutcome::Saved)
+    }
+
+    fn open_encrypted_wallet(&self) -> Result<PortableOpenOutcome, PlatformError> {
+        Err(PlatformError::UnsupportedCapability {
+            platform: "web",
+            capability: "native open dialog; use the encrypted file picker",
+        })
+    }
+}
+
+/// In-memory idempotency gate for the current wallet session. It deliberately
+/// records only delivery fingerprints, never acceptance or transfer state.
+#[derive(Debug, Default)]
+pub struct LocalDeliveryGate {
+    delivered: HashSet<String>,
+}
+
+impl LocalDeliveryGate {
+    #[cfg(test)]
+    fn delivery_count(&self) -> usize {
+        self.delivered.len()
+    }
+
+    fn decode(
+        origin: InboundOrigin,
+        payload: &[u8],
+        now: u64,
+    ) -> Result<InboundIntent, PlatformError> {
+        if payload.len() > MAX_INBOUND_INTENT_BYTES {
+            return Err(PlatformError::InboundIntent(format!(
+                "package exceeds the {} byte limit",
+                MAX_INBOUND_INTENT_BYTES
+            )));
+        }
+        let intent: SigningIntent = csv_wire::app::decode(payload).map_err(|error| {
+            PlatformError::InboundIntent(format!(
+                "package is not a canonical signing intent: {error}"
+            ))
+        })?;
+        // `decode` recognizes the artifact header; byte-for-byte re-encoding
+        // rejects alternate encodings and trailing/partial-trust formats.
+        let canonical = csv_wire::app::encode(&intent).map_err(|error| {
+            PlatformError::InboundIntent(format!("intent cannot be canonicalized: {error}"))
+        })?;
+        if canonical != payload {
+            return Err(PlatformError::InboundIntent(
+                "package is not canonical encoding".to_string(),
+            ));
+        }
+        validate_signing_intent(&intent, &intent.network, now).map_err(|error| {
+            PlatformError::InboundIntent(format!("local package validation failed: {error}"))
+        })?;
+        let id = hex::encode(sha2::Sha256::digest(payload));
+        Ok(InboundIntent { id, origin, intent })
+    }
+}
+
+impl DeliveryPort for LocalDeliveryGate {
+    fn receive(
+        &mut self,
+        origin: InboundOrigin,
+        payload: &[u8],
+        now: u64,
+    ) -> Result<InboundDelivery, PlatformError> {
+        let inbound = Self::decode(origin, payload, now)?;
+        if !self.delivered.insert(inbound.id.clone()) {
+            return Ok(InboundDelivery::Duplicate { id: inbound.id });
+        }
+        Ok(InboundDelivery::PendingReview(inbound))
+    }
+
+    fn receive_deep_link(&mut self, url: &str, now: u64) -> Result<InboundDelivery, PlatformError> {
+        let query = url.strip_prefix("hemion://accept?").ok_or_else(|| {
+            PlatformError::InboundIntent("link must use the hemion://accept endpoint".to_string())
+        })?;
+        let mut encoded = None;
+        for pair in query.split('&') {
+            let Some((key, value)) = pair.split_once('=') else {
+                return Err(PlatformError::InboundIntent(
+                    "malformed link query".to_string(),
+                ));
+            };
+            match key {
+                "intent" if encoded.is_none() => encoded = Some(value),
+                "intent" => {
+                    return Err(PlatformError::InboundIntent(
+                        "link contains duplicate intent data".to_string(),
+                    ));
+                }
+                _ => {
+                    return Err(PlatformError::InboundIntent(
+                        "link contains an unsupported parameter".to_string(),
+                    ));
+                }
+            }
+        }
+        let encoded = encoded.ok_or_else(|| {
+            PlatformError::InboundIntent("link has no intent package".to_string())
+        })?;
+        if encoded.len() > MAX_INBOUND_INTENT_BYTES * 2 {
+            return Err(PlatformError::InboundIntent(
+                "link package exceeds the size limit".to_string(),
+            ));
+        }
+        let payload = hex::decode(encoded).map_err(|_| {
+            PlatformError::InboundIntent(
+                "link intent must be hexadecimal canonical CBOR".to_string(),
+            )
+        })?;
+        self.receive(InboundOrigin::BrowserLink, &payload, now)
+    }
 }
 
 /// Commands that may cross the runtime boundary.  They deliberately contain
@@ -378,7 +763,11 @@ impl VaultPort for LocalVault {
 
 #[cfg(test)]
 mod tests {
-    use super::{PlatformError, validate_signing_intent};
+    use super::{
+        CapabilityState, DeliveryPort, InboundDelivery, InboundOrigin, LocalDeliveryGate,
+        MAX_INBOUND_INTENT_BYTES, PlatformCapabilities, PlatformError, PlatformTarget,
+        validate_signing_intent,
+    };
     use csv_sdk::contract::{IntentOperation, IntentValue, SigningIntent};
     use csv_wire::{SanadIdWire, SealPointWire};
 
@@ -418,6 +807,20 @@ mod tests {
     }
 
     #[test]
+    fn platform_capabilities_never_claim_unimplemented_mobile_support() {
+        let mobile = PlatformCapabilities::for_target(PlatformTarget::Mobile);
+        assert_eq!(mobile.camera_qr, CapabilityState::Unavailable);
+        assert_eq!(mobile.local_vault, CapabilityState::Unavailable);
+        assert_eq!(mobile.background_push, CapabilityState::Unavailable);
+
+        let web = PlatformCapabilities::for_target(PlatformTarget::Web);
+        assert_eq!(
+            web.runtime_orchestration,
+            CapabilityState::RequiresRemoteRuntime
+        );
+    }
+
+    #[test]
     fn signing_refuses_network_mismatch() {
         assert!(matches!(
             validate_signing_intent(&intent(10), "mainnet", 11),
@@ -433,5 +836,62 @@ mod tests {
             validate_signing_intent(&invalid, "sepolia", 11),
             Err(PlatformError::InvalidSigningIntent(_))
         ));
+    }
+
+    #[test]
+    fn inbound_payloads_are_size_limited_before_decode() {
+        let mut gate = LocalDeliveryGate::default();
+        let oversized = vec![0_u8; MAX_INBOUND_INTENT_BYTES + 1];
+        assert!(matches!(
+            gate.receive(InboundOrigin::ImportedFile, &oversized, 11),
+            Err(PlatformError::InboundIntent(_))
+        ));
+        assert_eq!(gate.delivery_count(), 0);
+    }
+
+    #[test]
+    fn malformed_or_truncated_canonical_payload_never_becomes_pending() {
+        let mut gate = LocalDeliveryGate::default();
+        let mut encoded = csv_wire::app::encode(&intent(10)).expect("canonical intent");
+        encoded.pop();
+        assert!(matches!(
+            gate.receive(InboundOrigin::ScannedQr, &encoded, 11),
+            Err(PlatformError::InboundIntent(_))
+        ));
+        assert_eq!(gate.delivery_count(), 0);
+    }
+
+    #[test]
+    fn inbound_delivery_is_pending_review_and_duplicate_delivery_is_idempotent() {
+        let mut gate = LocalDeliveryGate::default();
+        let encoded = csv_wire::app::encode(&intent(10)).expect("canonical intent");
+        let first = gate
+            .receive(InboundOrigin::BrowserLink, &encoded, 11)
+            .expect("pending review");
+        let id = match first {
+            InboundDelivery::PendingReview(inbound) => {
+                assert_eq!(inbound.origin_display(), "browser link");
+                inbound.id
+            }
+            InboundDelivery::Duplicate { .. } => panic!("first delivery must require review"),
+        };
+        assert_eq!(gate.delivery_count(), 1);
+        assert_eq!(
+            gate.receive(InboundOrigin::BrowserLink, &encoded, 11),
+            Ok(InboundDelivery::Duplicate { id })
+        );
+    }
+
+    #[test]
+    fn deep_link_is_only_an_unapproved_browser_delivery() {
+        let mut gate = LocalDeliveryGate::default();
+        let encoded = hex::encode(csv_wire::app::encode(&intent(10)).expect("canonical intent"));
+        let delivery = gate
+            .receive_deep_link(&format!("hemion://accept?intent={encoded}"), 11)
+            .expect("deep link is parsed");
+        assert!(matches!(delivery, InboundDelivery::PendingReview(_)));
+        // The delivery gate has only recorded idempotency; no wallet or
+        // transfer authority is reachable from this parser.
+        assert_eq!(gate.delivery_count(), 1);
     }
 }

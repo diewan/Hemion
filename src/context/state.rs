@@ -18,6 +18,10 @@ pub struct AppState {
     pub nfts: Vec<NftRecord>,
     pub nft_collections: Vec<NftCollection>,
     pub notification: Option<Notification>,
+    /// Session state is intentionally ephemeral and is never persisted with
+    /// wallet metadata.
+    pub locked: bool,
+    pub session_expires_at: Option<u64>,
 }
 
 impl Default for AppState {
@@ -35,6 +39,8 @@ impl Default for AppState {
             nfts: Vec::new(),
             nft_collections: Vec::new(),
             notification: None,
+            locked: true,
+            session_expires_at: None,
         }
     }
 }
@@ -53,5 +59,42 @@ impl PartialEq for AppState {
             && self.nfts.len() == other.nfts.len()
             && self.nft_collections.len() == other.nft_collections.len()
             && self.notification.is_some() == other.notification.is_some()
+            && self.locked == other.locked
+    }
+}
+
+impl AppState {
+    pub fn end_wallet_session(&mut self) {
+        self.locked = true;
+        self.session_expires_at = None;
+        self.notification = None;
+    }
+
+    pub fn start_wallet_session(&mut self, expires_at: u64) {
+        self.locked = false;
+        self.session_expires_at = Some(expires_at);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::wallet::account::ChainAccount;
+
+    #[test]
+    fn ending_a_session_preserves_wallet_and_asset_metadata() {
+        let mut state = AppState::default();
+        state.wallet.add_account(ChainAccount::watch_only(
+            csv_hash::ChainId::new("bitcoin"),
+            "Savings",
+            "bc1qexample",
+        ));
+        state.start_wallet_session(100);
+
+        state.end_wallet_session();
+
+        assert!(state.locked);
+        assert_eq!(state.wallet.total_accounts(), 1);
+        assert_eq!(state.wallet.accounts[0].name, "Savings");
     }
 }

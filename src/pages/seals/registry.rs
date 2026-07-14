@@ -60,8 +60,8 @@ pub fn SealRegistry() -> Element {
                     h1 { class: "text-xl font-bold", "Seal Registry" }
                 }
                 div { class: "flex gap-2",
-                    Link { to: Route::Seals {}, class: "{btn_secondary_class()}", "All Seals" }
-                    Link { to: Route::CreateSeal {}, class: "{btn_primary_class()}", "+ Create" }
+                    Link { to: Route::AssetSeals {}, class: "{btn_secondary_class()}", "All Seals" }
+                    Link { to: Route::AssetSealCreate {}, class: "{btn_primary_class()}", "+ Create" }
                 }
             }
 
@@ -98,7 +98,7 @@ pub fn SealRegistry() -> Element {
                     if seals.is_empty() {
                         div { class: "p-8 text-center",
                             p { class: "text-gray-400", "No seals registered yet." }
-                            Link { to: Route::CreateSeal {}, class: "{btn_primary_class()} mt-4", "Create First Seal" }
+                            Link { to: Route::AssetSealCreate {}, class: "{btn_primary_class()} mt-4", "Create First Seal" }
                         }
                     } else {
                         table { class: "w-full text-sm",
@@ -166,7 +166,7 @@ fn seal_row(seal: &SealRecord) -> Element {
                 if seal.sanad_id.as_deref().is_none_or(|s| s.is_empty()) {
                     span { class: "text-gray-500", "-" }
                 } else {
-                    Link { to: Route::SanadJourney { id: seal.sanad_id.clone().unwrap_or_default() },
+                    Link { to: Route::AssetJourney { id: seal.sanad_id.clone().unwrap_or_default() },
                         class: "font-mono text-xs text-blue-400 hover:underline",
                         "{sanad_display}"
                     }
@@ -175,9 +175,9 @@ fn seal_row(seal: &SealRecord) -> Element {
             td { class: "px-4 py-3 font-mono", "{seal.value}" }
             td { class: "px-4 py-3",
                 div { class: "flex gap-2",
-                    Link { to: Route::VerifySeal {}, class: "text-xs text-blue-400 hover:underline", "Verify" }
+                    Link { to: Route::AssetSealVerify {}, class: "text-xs text-blue-400 hover:underline", "Verify" }
                     if seal.status == SealStatus::Active {
-                        Link { to: Route::ConsumeSeal { seal_ref: Some(seal.seal_ref.clone()) }, class: "text-xs text-orange-400 hover:underline", "Consume" }
+                        Link { to: Route::AssetSealConsume { seal_ref: Some(seal.seal_ref.clone()) }, class: "text-xs text-orange-400 hover:underline", "Consume" }
                     }
                 }
             }

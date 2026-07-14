@@ -25,20 +25,17 @@ fn destinations() -> [Destination; 5] {
         Destination {
             label: "Assets",
             icon: "◇",
-            route: Route::WalletPage {},
+            route: Route::Assets {},
         },
         Destination {
             label: "Activity",
             icon: "↔",
-            route: Route::Transactions {},
+            route: Route::Activity {},
         },
-        // Contacts do not yet have a persisted contact model.  Keep the
-        // destination visible and route it to the honest Settings surface
-        // until that Phase 1 capability exists.
         Destination {
             label: "Contacts",
             icon: "♙",
-            route: Route::Settings {},
+            route: Route::Contacts {},
         },
         Destination {
             label: "Settings",

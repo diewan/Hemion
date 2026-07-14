@@ -5,9 +5,10 @@
 //! safe to discard and rebuild after reconnecting to the runtime.
 
 use csv_sdk::contract::{
-    FinalityEvidence, NextAction, ReceiptBody, TransferEvent, TransferMode, TransferPhase,
-    TransferReceipt, VerificationAssuranceWire, VerificationRecord,
+    ContractArtifact, FinalityEvidence, NextAction, ReceiptBody, TransferEvent, TransferMode,
+    TransferPhase, TransferReceipt, VerificationAssuranceWire, VerificationRecord,
 };
+use sha2::{Digest, Sha256};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EvidenceView {
@@ -142,11 +143,18 @@ pub struct TransferLifecycleView {
     pub proof_hash: Option<String>,
     pub invoice_id: Option<String>,
     pub consignment_digest: Option<String>,
+    /// Exact versioned wire artifact from which this projection was built.
+    /// Keeping the bytes alongside the disposable projection lets Inspector
+    /// export evidence without reconstructing it from UI fields.
+    pub artifact_kind: &'static str,
+    pub artifact_cbor_hex: Option<String>,
+    pub artifact_sha256: Option<String>,
     pub permitted_actions: Vec<NextAction>,
 }
 
 impl TransferLifecycleView {
     pub fn from_event(event: &TransferEvent) -> Self {
+        let (artifact_cbor_hex, artifact_sha256) = encoded_artifact(event);
         let mut view = Self {
             transfer_id: Some(event.transfer_id.clone()),
             sanad_id: event.sanad_id.bytes.clone(),
@@ -165,6 +173,9 @@ impl TransferLifecycleView {
             proof_hash: None,
             invoice_id: None,
             consignment_digest: None,
+            artifact_kind: "runtime event",
+            artifact_cbor_hex,
+            artifact_sha256,
             permitted_actions: event.next_actions.clone(),
         };
         match &event.phase {
@@ -197,6 +208,7 @@ impl TransferLifecycleView {
     }
 
     pub fn from_receipt(receipt: &TransferReceipt) -> Self {
+        let (artifact_cbor_hex, artifact_sha256) = encoded_artifact(receipt);
         match &receipt.body {
             ReceiptBody::Materialize(body) => {
                 let (assurance, provenance) = match body.verification {
@@ -232,6 +244,9 @@ impl TransferLifecycleView {
                     proof_hash: None,
                     invoice_id: None,
                     consignment_digest: None,
+                    artifact_kind: "runtime receipt",
+                    artifact_cbor_hex: artifact_cbor_hex.clone(),
+                    artifact_sha256: artifact_sha256.clone(),
                     permitted_actions: receipt.next_actions.clone(),
                 }
             }
@@ -257,6 +272,9 @@ impl TransferLifecycleView {
                 proof_hash: None,
                 invoice_id: Some(hex::encode(&body.invoice_id)),
                 consignment_digest: Some(hex::encode(&body.consignment_digest)),
+                artifact_kind: "runtime receipt",
+                artifact_cbor_hex: artifact_cbor_hex.clone(),
+                artifact_sha256: artifact_sha256.clone(),
                 permitted_actions: receipt.next_actions.clone(),
             },
             ReceiptBody::Invoice(body) => Self {
@@ -281,6 +299,9 @@ impl TransferLifecycleView {
                 proof_hash: None,
                 invoice_id: Some(hex::encode(&body.invoice_id)),
                 consignment_digest: None,
+                artifact_kind: "runtime receipt",
+                artifact_cbor_hex: artifact_cbor_hex.clone(),
+                artifact_sha256: artifact_sha256.clone(),
                 permitted_actions: receipt.next_actions.clone(),
             },
             ReceiptBody::Accept(body) => Self {
@@ -305,6 +326,9 @@ impl TransferLifecycleView {
                 proof_hash: None,
                 invoice_id: None,
                 consignment_digest: None,
+                artifact_kind: "runtime receipt",
+                artifact_cbor_hex,
+                artifact_sha256,
                 permitted_actions: receipt.next_actions.clone(),
             },
         }
@@ -334,6 +358,16 @@ impl TransferLifecycleView {
     }
     pub fn allows_retry(&self) -> bool {
         self.permitted_actions.contains(&NextAction::Retry)
+    }
+}
+
+fn encoded_artifact<T: ContractArtifact>(artifact: &T) -> (Option<String>, Option<String>) {
+    match csv_wire::app::encode(artifact) {
+        Ok(bytes) => {
+            let digest = hex::encode(Sha256::digest(&bytes));
+            (Some(hex::encode(bytes)), Some(digest))
+        }
+        Err(_) => (None, None),
     }
 }
 
@@ -424,5 +458,21 @@ mod tests {
         ));
         assert!(!view.allows_resume());
         assert!(!view.allows_retry());
+    }
+
+    #[test]
+    fn inspector_export_preserves_the_exact_versioned_wire_artifact() {
+        let source = event(TransferPhase::Admitted, 7);
+        let expected = csv_wire::app::encode(&source).expect("event wire artifact");
+        let view = TransferLifecycleView::from_event(&source);
+
+        assert_eq!(
+            hex::decode(view.artifact_cbor_hex.expect("artifact bytes")).unwrap(),
+            expected
+        );
+        assert_eq!(
+            view.artifact_sha256.expect("artifact digest"),
+            hex::encode(Sha256::digest(&expected))
+        );
     }
 }

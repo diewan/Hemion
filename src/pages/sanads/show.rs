@@ -1,5 +1,6 @@
 //! Show sanad details page.
 
+use crate::components::Inspector;
 use crate::context::use_wallet_context;
 use crate::pages::common::*;
 use crate::routes::Route;
@@ -14,14 +15,15 @@ pub fn ShowSanad(id: String) -> Element {
     rsx! {
         div { class: "max-w-2xl space-y-6",
             div { class: "flex items-center gap-3",
-                Link { to: Route::Sanads {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
+                Link { to: Route::Assets {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
                 h1 { class: "text-xl font-bold", "Sanad Details" }
             }
+            Inspector { lifecycle: None }
 
             if deleted() {
                 div { class: "{card_class()} p-6",
                     p { class: "text-green-400", "Sanad deleted successfully." }
-                    Link { to: Route::Sanads {}, class: "{btn_secondary_class()} mt-4 inline-block", "Return to Sanads" }
+                    Link { to: Route::Assets {}, class: "{btn_secondary_class()} mt-4 inline-block", "Return to Sanads" }
                 }
             } else if let Some(sanad) = sanad {
                 div { class: "{card_class()} overflow-hidden",

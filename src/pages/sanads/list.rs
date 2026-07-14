@@ -25,7 +25,7 @@ pub fn Sanads() -> Element {
         div { class: "space-y-6",
             div { class: "flex items-center justify-between",
                 h1 { class: "text-2xl font-bold", "Sanads" }
-                Link { to: Route::CreateSanad {}, class: "{btn_primary_class()}", "+ Create Sanad" }
+                Link { to: Route::AssetCreate {}, class: "{btn_primary_class()}", "+ Create Sanad" }
             }
 
             // Filter bar
@@ -98,8 +98,8 @@ pub fn Sanads() -> Element {
                                                     }
                                                 }
                                                 td { class: "px-4 py-3 flex gap-2",
-                                                    Link { to: Route::SanadJourney { id: sanad.id.clone() }, class: "text-purple-400 hover:text-purple-300 text-xs font-medium", "Journey" }
-                                                    Link { to: Route::ShowSanad { id: sanad.id.clone() }, class: "text-blue-400 hover:text-blue-300 text-xs", "View" }
+                                                    Link { to: Route::AssetJourney { id: sanad.id.clone() }, class: "text-purple-400 hover:text-purple-300 text-xs font-medium", "Journey" }
+                                                    Link { to: Route::AssetDetail { id: sanad.id.clone() }, class: "text-blue-400 hover:text-blue-300 text-xs", "View" }
                                                     button {
                                                         onclick: {
                                                             let mut wallet_ctx = wallet_ctx.clone();

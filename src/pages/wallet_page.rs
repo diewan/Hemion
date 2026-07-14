@@ -4,10 +4,13 @@ use crate::chains::supported_wallet_chains;
 use crate::components::{Card, ChainDisplay, NetworkDisplay, all_chain_displays};
 use crate::context::{PortableImportMode, WalletContext, use_wallet_context};
 use crate::routes::Route;
+use crate::services::platform::{
+    PlatformCapabilities, PlatformPortableFilePort, PlatformTarget, PortableFileOutcome,
+    PortableFilePort, PortableOpenOutcome,
+};
 use crate::wallet_core::ChainAccount;
 use csv_hash::ChainId;
 use dioxus::prelude::*;
-use wasm_bindgen::prelude::*;
 
 #[derive(Clone, Copy, PartialEq)]
 enum WalletTab {
@@ -422,8 +425,11 @@ fn ExportTab() -> Element {
                             }
                             match wallet_ctx.export_wallet_file(&vault_password(), &file_password()) {
                                 Ok(bytes) => {
-                                    trigger_download_bytes("hemion-export.csvw", &bytes);
-                                    message.set(Some("Wallet exported! Check your downloads folder.".to_string()));
+                                    match PlatformPortableFilePort.save_encrypted_wallet("hemion-export.csvw", &bytes) {
+                                        Ok(PortableFileOutcome::Saved) => message.set(Some("Encrypted wallet file saved.".to_string())),
+                                        Ok(PortableFileOutcome::Cancelled) => message.set(Some("Save cancelled; no file was written.".to_string())),
+                                        Err(e) => error.set(Some(e.to_string())),
+                                    }
                                 }
                                 Err(e) => error.set(Some(e)),
                             }
@@ -453,6 +459,7 @@ fn ImportTab() -> Element {
     let mut file_password = use_signal(String::new);
     let mut mode = use_signal(|| PortableImportMode::Profile);
     let mut replace_confirmed = use_signal(|| false);
+    let platform_target = PlatformCapabilities::current().target;
 
     if *success.read() {
         return rsx! {
@@ -509,39 +516,52 @@ fn ImportTab() -> Element {
                         }
                     }
 
-                    input {
-                        r#type: "file",
-                        accept: ".csvw,application/octet-stream",
-                        id: "wallet-import-input",
-                        class: "w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-800 file:text-gray-300 hover:file:bg-gray-700 cursor-pointer",
-                        onchange: move |_| {
-                            if let Some(window) = web_sys::window()
-                                && let Some(document) = window.document()
-                                && let Some(el) = document.get_element_by_id("wallet-import-input")
-                                && let Some(input) = el.dyn_ref::<web_sys::HtmlInputElement>()
-                                && let Some(files) = input.files()
-                                && let Some(file) = files.get(0)
-                            {
+                    if platform_target == PlatformTarget::Desktop {
+                        button {
+                            class: "w-full min-h-11 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-700",
+                            onclick: {
                                 let mut ctx = wallet_ctx.clone();
-                                if let Ok(reader) = web_sys::FileReader::new() {
-                                                            let onload = Closure::wrap(Box::new(move |e: web_sys::ProgressEvent| {
-                                                                if let Some(target) = e.target()
-                                                                    && let Some(r) = target.dyn_ref::<web_sys::FileReader>()
-                                                                    && let Ok(result) = r.result()
-                                                                {
-                                                                        let bytes = js_sys::Uint8Array::new(&result).to_vec();
-                                                                        match ctx.import_wallet_file(&bytes, &file_password(), &vault_password(), mode(), replace_confirmed()) {
-                                                                            Ok(_) => success.set(true),
-                                                                            Err(e) => error.set(Some(e)),
-                                                                        }
-                                                                }
-                                                            }) as Box<dyn FnMut(_)>);
-                                                            reader.set_onload(Some(onload.as_ref().unchecked_ref()));
-                                                            onload.forget();
-                                                            let _ = reader.read_as_array_buffer(&file);
+                                move |_| match PlatformPortableFilePort.open_encrypted_wallet() {
+                                    Ok(PortableOpenOutcome::Opened(bytes)) => match ctx.import_wallet_file(&bytes, &file_password(), &vault_password(), mode(), replace_confirmed()) {
+                                        Ok(_) => success.set(true),
+                                        Err(e) => error.set(Some(e)),
+                                    },
+                                    Ok(PortableOpenOutcome::Cancelled) => error.set(None),
+                                    Err(e) => error.set(Some(e.to_string())),
                                 }
-                            }
-                        },
+                            },
+                            "Open encrypted wallet with system dialog"
+                        }
+                    }
+
+                    if platform_target == PlatformTarget::Web {
+                        input {
+                            r#type: "file",
+                            accept: ".csvw,application/octet-stream",
+                            id: "wallet-import-input",
+                            class: "w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-800 file:text-gray-300 hover:file:bg-gray-700 cursor-pointer",
+                            aria_label: "Browser encrypted wallet file picker",
+                            onchange: move |event| {
+                                let Some(file) = event.files().into_iter().next() else {
+                                    error.set(Some("No wallet file was selected.".to_string()));
+                                    return;
+                                };
+                                if file.size() > 16 * 1024 * 1024 {
+                                    error.set(Some("Wallet file exceeds the 16 MiB import limit.".to_string()));
+                                    return;
+                                }
+                                let mut ctx = wallet_ctx.clone();
+                                spawn(async move {
+                                    match file.read_bytes().await {
+                                        Ok(bytes) => match ctx.import_wallet_file(&bytes, &file_password(), &vault_password(), mode(), replace_confirmed()) {
+                                            Ok(_) => success.set(true),
+                                            Err(e) => error.set(Some(e)),
+                                        },
+                                        Err(e) => error.set(Some(format!("Could not read wallet file: {e}"))),
+                                    }
+                                });
+                            },
+                        }
                     }
 
                     div { class: "bg-gray-800/50 rounded-lg p-4 border border-gray-700 text-sm text-gray-400",
@@ -549,33 +569,6 @@ fn ImportTab() -> Element {
                         p { "The upload is decoded directly from an in-memory byte buffer; it is never placed in UI state or logs." }
                     }
                 }
-            }
-        }
-    }
-}
-
-fn trigger_download_bytes(filename: &str, content: &[u8]) {
-    if let Some(window) = web_sys::window() {
-        let opts = web_sys::BlobPropertyBag::new();
-        opts.set_type("application/octet-stream");
-        let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(
-            &js_sys::Array::from_iter([js_sys::Uint8Array::from(content)]),
-            &opts,
-        )
-        .ok();
-
-        if let Some(blob) = blob {
-            let url = web_sys::Url::create_object_url_with_blob(&blob).ok();
-            if let Some(url) = url {
-                let a = window.document().and_then(|d| d.create_element("a").ok());
-                if let Some(a) = a
-                    && let Some(a) = a.dyn_ref::<web_sys::HtmlAnchorElement>()
-                {
-                    a.set_href(&url);
-                    a.set_download(filename);
-                    a.click();
-                }
-                let _ = web_sys::Url::revoke_object_url(&url);
             }
         }
     }

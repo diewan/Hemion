@@ -2,6 +2,8 @@
 
 ## WUX-001 — Separate lock from erase and add a real unlock session
 
+**Status:** complete
+
 **Priority:** P0 before a custody-oriented desktop release.
 
 `WalletContext::lock` currently clears persisted wallet data. Implement distinct operations:
@@ -11,6 +13,12 @@
 - erase: require a typed confirmation, remove local data, and explain recovery requirements.
 
 Include inactivity/session-expiry UI, lock status in the application header, and tests proving that locking cannot erase assets or account metadata.
+
+- [x] Lock retains persisted wallet, asset, and account metadata while ending cached-key sessions.
+- [x] Unlock verifies the vault passphrase and creates a bounded 15-minute session.
+- [x] Erase requires the exact typed confirmation `ERASE` and explains recovery requirements.
+- [x] Header and Settings expose locked/unlocked state and session controls.
+- [x] Regression coverage proves ending a session retains account metadata.
 
 ## WUX-002 — Native credential-store and signer integration
 
@@ -44,6 +52,14 @@ Threat-model browser storage, extension injection, clipboard leakage, Content Se
 
 ## WUX-007 — Platform-native encrypted backup import and export
 
+**Status:** complete
+
 **Priority:** P0 before desktop backup recovery is advertised.
 
 The present backup UI uses browser download and `FileReader` APIs. Provide desktop save/open dialogs, restrictive default file permissions, overwrite confirmation, cancellation/error states, and platform-specific implementations behind a shared interface. Keep the browser flow feature-gated so desktop actions cannot invoke Web APIs.
+
+- [x] Native open/save dialogs are implemented behind `PortableFilePort`.
+- [x] Native exports use restrictive `0600` permissions on Unix and the system overwrite confirmation.
+- [x] Cancellation and I/O failures are explicit UI outcomes.
+- [x] Browser byte-buffer import/download stays inside the web platform implementation.
+- [x] Wallet page code contains no direct `web_sys`, `js_sys`, or `wasm_bindgen` calls.

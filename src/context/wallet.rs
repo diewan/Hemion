@@ -8,6 +8,7 @@ use crate::wallet_core::{ChainAccount, WalletData};
 use csv_wallet::format::{self, KeySource, KeySourceKind, KnownAccount, WalletPayload};
 use dioxus::prelude::*;
 use std::sync::{Arc, OnceLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 use zeroize::{Zeroize, Zeroizing};
 
 #[cfg(target_arch = "wasm32")]
@@ -344,6 +345,18 @@ impl WalletContext {
         !self.state.read().wallet.is_empty()
     }
 
+    pub fn is_locked(&self) -> bool {
+        let state = self.state.read();
+        state.locked
+            || state
+                .session_expires_at
+                .is_some_and(|expiry| unix_now() >= expiry)
+    }
+
+    pub fn session_expires_at(&self) -> Option<u64> {
+        self.state.read().session_expires_at
+    }
+
     pub fn accounts(&self) -> Vec<ChainAccount> {
         self.state.read().wallet.all_accounts()
     }
@@ -426,6 +439,9 @@ impl WalletContext {
         vault_passphrase: &str,
         file_passphrase: &str,
     ) -> Result<Vec<u8>, String> {
+        if self.is_locked() {
+            return Err("Unlock the wallet before exporting signing keys".to_string());
+        }
         let accounts = self.accounts();
         let passphrase = csv_keys::memory::Passphrase::new(vault_passphrase);
         let mut payload = WalletPayload::new();
@@ -653,6 +669,9 @@ impl WalletContext {
             accounts: imported_accounts,
             selected_account_id: None,
         };
+        self.state
+            .write()
+            .start_wallet_session(unix_now().saturating_add(15 * 60));
         self.save_persisted();
         Ok(PortableImportSummary {
             signing_keys_installed: count,
@@ -730,6 +749,9 @@ impl WalletContext {
         &self,
         chain: ChainId,
     ) -> Option<crate::services::blockchain::NativeWallet> {
+        if self.is_locked() {
+            return None;
+        }
         use crate::services::blockchain::wallet_connection;
         self.accounts_for_chain(chain)
             .first()
@@ -852,6 +874,9 @@ impl WalletContext {
 
         // Add to wallet
         self.add_account(account);
+        self.state
+            .write()
+            .start_wallet_session(unix_now().saturating_add(15 * 60));
 
         Ok(())
     }
@@ -863,6 +888,9 @@ impl WalletContext {
         key_id: &str,
         passphrase: &str,
     ) -> Result<String, String> {
+        if self.is_locked() {
+            return Err("Unlock the wallet before accessing signing keys".to_string());
+        }
         let mut ks_guard = self
             .native_keystore
             .lock()
@@ -1068,25 +1096,89 @@ impl WalletContext {
         self.state.write().notification = None;
     }
 
-    /// Lock the wallet (clear all data).
+    /// End the signing session while retaining encrypted data and all public
+    /// wallet/account metadata.
     pub fn lock(&mut self) {
-        let mut s = self.state.write();
-        s.wallet = WalletData::default();
-        s.sanads.clear();
-        s.transfers.clear();
-        s.contracts.clear();
-        s.seals.clear();
-        s.proofs.clear();
-        s.transactions.clear();
-        s.nfts.clear();
-        s.nft_collections.clear();
-        s.notification = None;
-        drop(s);
-        // Also clear storage
-        if let Some(store) = &self.store {
-            let _ = store.delete(UNIFIED_STORAGE_KEY);
-            let _ = store.delete(WALLET_MNEMONIC_KEY);
+        #[cfg(target_arch = "wasm32")]
+        if let Ok(mut keystore) = csv_keys::browser_keystore::BrowserKeystore::new() {
+            keystore.end_session();
         }
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Ok(mut guard) = self.native_keystore.lock()
+            && let Some(keystore) = guard.as_mut()
+        {
+            keystore.end_session();
+        }
+        self.state.write().end_wallet_session();
+    }
+
+    /// Verify the vault passphrase and create a bounded in-memory signing
+    /// session. Watch-only profiles may unlock without a secret-key probe.
+    pub fn unlock(&mut self, passphrase: &str) -> Result<(), String> {
+        let key_id = self
+            .accounts()
+            .into_iter()
+            .find_map(|account| account.keystore_ref);
+        if let Some(key_id) = key_id {
+            let passphrase = csv_keys::memory::Passphrase::new(passphrase);
+            #[cfg(target_arch = "wasm32")]
+            {
+                let mut keystore = csv_keys::browser_keystore::BrowserKeystore::new()
+                    .map_err(|error| format!("Platform vault unavailable: {error}"))?;
+                keystore
+                    .retrieve_key(&key_id, &passphrase)
+                    .map_err(|error| match error {
+                        csv_keys::browser_keystore::BrowserKeystoreError::InvalidPassphrase => {
+                            "Passphrase does not match this wallet".to_string()
+                        }
+                        _ => format!("Could not unlock the wallet: {error}"),
+                    })?;
+                keystore.start_session();
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let mut guard = self
+                    .native_keystore
+                    .lock()
+                    .map_err(|_| "Platform vault lock failed".to_string())?;
+                if guard.is_none() {
+                    *guard = Some(NativeKeystore::new().map_err(|error| error.to_string())?);
+                }
+                let keystore = guard.as_mut().expect("initialized above");
+                keystore
+                    .retrieve_key(&key_id, &passphrase)
+                    .map_err(|error| match error {
+                        NativeKeystoreError::PassphraseMismatch => {
+                            "Passphrase does not match this wallet".to_string()
+                        }
+                        _ => format!("Could not unlock the wallet: {error}"),
+                    })?;
+                keystore.start_session();
+            }
+        }
+        self.state
+            .write()
+            .start_wallet_session(unix_now().saturating_add(15 * 60));
+        Ok(())
+    }
+
+    /// Permanently remove local wallet data. Callers must require the exact
+    /// typed confirmation so this cannot be confused with locking.
+    pub fn erase(&mut self, typed_confirmation: &str) -> Result<(), String> {
+        if typed_confirmation != "ERASE" {
+            return Err("Type ERASE to permanently delete local wallet data".to_string());
+        }
+        self.lock();
+        if let Some(store) = &self.store {
+            store
+                .delete(UNIFIED_STORAGE_KEY)
+                .map_err(|error| format!("Could not erase wallet state: {error:?}"))?;
+            store
+                .delete(WALLET_MNEMONIC_KEY)
+                .map_err(|error| format!("Could not erase wallet metadata: {error:?}"))?;
+        }
+        *self.state.write() = AppState::default();
+        Ok(())
     }
 
     /// Get the WebSocket subscription manager.
@@ -1125,6 +1217,12 @@ impl WalletContext {
     pub fn get_polling_interval(&self, chain: &str) -> u64 {
         self.adaptive_poller.adjusted_interval_ms(chain)
     }
+}
+
+fn unix_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |duration| duration.as_secs())
 }
 
 /// Wallet provider component.

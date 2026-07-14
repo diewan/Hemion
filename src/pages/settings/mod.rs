@@ -2,4 +2,4 @@
 
 pub mod page;
 
-pub use page::Settings;
+pub use page::{Settings, SettingsAdvanced};

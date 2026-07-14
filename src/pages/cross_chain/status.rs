@@ -24,7 +24,7 @@ pub fn CrossChainStatus() -> Element {
     rsx! {
         div { class: "max-w-2xl space-y-6",
             div { class: "flex items-center gap-3",
-                Link { to: Route::CrossChain {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
+                Link { to: Route::Activity {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
                 h1 { class: "text-xl font-bold", "Transfer Status" }
             }
 

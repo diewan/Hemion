@@ -14,7 +14,7 @@ pub fn CrossChain() -> Element {
         div { class: "space-y-6",
             div { class: "flex items-center justify-between",
                 h1 { class: "text-2xl font-bold", "Cross-ChainId Transfers" }
-                Link { to: Route::CrossChainTransfer {}, class: "{btn_primary_class()}", "+ New Transfer" }
+                Link { to: Route::ActivityMove {}, class: "{btn_primary_class()}", "+ New Transfer" }
             }
 
             if transfers.is_empty() {
@@ -41,7 +41,7 @@ pub fn CrossChain() -> Element {
                                 for (idx, t) in transfers.iter().enumerate() {
                                     tr { key: "{idx}-{t.id}", class: "hover:bg-gray-800/50 transition-colors",
                                         td { class: "px-4 py-3",
-                                            Link { to: Route::TransferDetail { id: t.id.clone() },
+                                            Link { to: Route::ActivityTransferDetail { id: t.id.clone() },
                                                 class: "font-mono text-xs text-blue-400 hover:text-blue-300",
                                                 "{truncate_address(&t.id, 6)}"
                                             }
@@ -55,7 +55,7 @@ pub fn CrossChain() -> Element {
                                             }
                                         }
                                         td { class: "px-4 py-3",
-                                            Link { to: Route::TransferDetail { id: t.id.clone() },
+                                            Link { to: Route::ActivityTransferDetail { id: t.id.clone() },
                                                 class: "text-xs text-blue-400 hover:text-blue-300",
                                                 "View Details \u{2192}"
                                             }

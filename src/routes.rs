@@ -4,8 +4,6 @@ use dioxus::prelude::*;
 
 use crate::layout::Layout;
 use crate::pages::*;
-use crate::routes::cross_chain::TransferDetail;
-
 #[derive(Routable, PartialEq, Clone, Debug)]
 pub enum Route {
     #[layout(Layout)]
@@ -13,69 +11,117 @@ pub enum Route {
     #[route("/")]
     Dashboard {},
 
+    // Five task-oriented destinations.
+    #[route("/assets")]
+    Assets {},
+    #[route("/assets/create")]
+    AssetCreate {},
+    #[route("/assets/:id")]
+    AssetDetail { id: String },
+    #[route("/assets/:id/journey")]
+    AssetJourney { id: String },
+    #[route("/assets/transfer")]
+    AssetTransfer {},
+    #[route("/assets/consume")]
+    AssetConsume {},
+    #[route("/assets/seals")]
+    AssetSeals {},
+    #[route("/assets/seals/create")]
+    AssetSealCreate {},
+    #[route("/assets/seals/consume")]
+    AssetSealConsume { seal_ref: Option<String> },
+    #[route("/assets/seals/registry")]
+    AssetSealRegistry {},
+    #[route("/assets/seals/verify")]
+    AssetSealVerify {},
+    #[route("/assets/collectibles")]
+    AssetCollectibles {},
+    #[route("/assets/collectibles/collections")]
+    AssetCollections {},
+    #[route("/assets/collectibles/:id")]
+    AssetCollectibleDetail { id: String },
+    #[route("/assets/wallet")]
+    AssetWallet {},
+    #[route("/activity")]
+    Activity {},
+    #[route("/activity/move")]
+    ActivityMove {},
+    #[route("/activity/status")]
+    ActivityStatus {},
+    #[route("/activity/retry")]
+    ActivityRetry {},
+    #[route("/activity/transfers/:id")]
+    ActivityTransferDetail { id: String },
+    #[route("/activity/transactions/:id")]
+    ActivityTransactionDetail { id: String },
+    #[route("/activity/accounts/:id")]
+    ActivityAccountTransactions { id: String },
+    #[route("/contacts")]
+    Contacts {},
+
     // Sanads
     #[route("/sanads")]
-    Sanads {},
+    LegacySanads {},
     #[route("/sanads/create")]
-    CreateSanad {},
+    LegacyCreateSanad {},
     #[route("/sanads/:id")]
-    ShowSanad { id: String },
+    LegacyShowSanad { id: String },
     #[route("/sanads/:id/journey")]
-    SanadJourney { id: String },
+    LegacySanadJourney { id: String },
     #[route("/sanads/transfer")]
-    TransferSanad {},
+    LegacyTransferSanad {},
     #[route("/sanads/consume")]
-    ConsumeSanad {},
+    LegacyConsumeSanad {},
 
     // Proofs
     #[route("/proofs")]
-    Proofs {},
+    LegacyProofs {},
     #[route("/proofs/:id/bundle")]
-    ProofBundlePage { id: String },
+    RedirectProofBundle { id: String },
     #[route("/proofs/generate")]
-    GenerateProof {},
+    RedirectToAdvanced {},
     #[route("/proofs/verify")]
-    VerifyProof {},
+    LegacyVerifyProof {},
     #[route("/proofs/verify-cross-chain")]
-    VerifyCrossChainProof {},
+    LegacyVerifyCrossChainProof {},
 
     // Cross-ChainId
     #[route("/cross-chain")]
-    CrossChain {},
+    LegacyCrossChain {},
     #[route("/cross-chain/transfer")]
-    CrossChainTransfer {},
+    LegacyCrossChainTransfer {},
     #[route("/cross-chain/status")]
-    CrossChainStatus {},
+    LegacyCrossChainStatus {},
     #[route("/cross-chain/retry")]
-    CrossChainRetry {},
+    LegacyCrossChainRetry {},
     #[route("/cross-chain/transfer/:id")]
-    TransferDetail { id: String },
+    LegacyTransferDetail { id: String },
 
     // Seals
     #[route("/seals")]
-    Seals {},
+    LegacySeals {},
     #[route("/seals/create")]
-    CreateSeal {},
+    LegacyCreateSeal {},
     #[route("/seals/consume")]
-    ConsumeSeal { seal_ref: Option<String> },
+    LegacyConsumeSeal { seal_ref: Option<String> },
     #[route("/seals/registry")]
-    SealRegistry {},
+    LegacySealRegistry {},
     #[route("/seals/verify")]
-    VerifySeal {},
+    LegacyVerifySeal {},
 
     // Validate
     #[route("/validate")]
-    Validate {},
+    LegacyValidate {},
     #[route("/validate/consignment")]
-    ValidateConsignment {},
+    LegacyValidateConsignment {},
     #[route("/validate/offline")]
-    OfflineVerify {},
+    LegacyOfflineVerify {},
     #[route("/validate/proof")]
-    ValidateProof {},
+    LegacyValidateProof {},
     #[route("/validate/seal")]
-    ValidateSeal {},
+    LegacyValidateSeal {},
     #[route("/validate/commitment-chain")]
-    ValidateCommitmentChain {},
+    LegacyValidateCommitmentChain {},
 
     // ZK Proofs. These routes deliberately render typed unavailability states
     // until a real prover/verifier backend is wired through the runtime.
@@ -86,27 +132,49 @@ pub enum Route {
 
     // NFT Gallery
     #[route("/nfts")]
-    NftGallery {},
+    LegacyNftGallery {},
     #[route("/nfts/collections")]
-    NftCollections {},
+    LegacyNftCollections {},
     #[route("/nfts/:id")]
-    NftDetail { id: String },
+    LegacyNftDetail { id: String },
 
     // Wallet management sub-page
     #[route("/wallet")]
-    WalletPage {},
+    LegacyWalletPage {},
 
     // Account-specific views
     #[route("/account/:id/transactions")]
-    AccountTransactions { id: String },
+    LegacyAccountTransactions { id: String },
 
     // Transactions
     #[route("/transactions")]
-    Transactions {},
+    LegacyTransactions {},
     #[route("/transactions/:id")]
-    TransactionDetail { id: String },
+    LegacyTransactionDetail { id: String },
 
     // Settings
     #[route("/settings")]
     Settings {},
+    #[route("/settings/advanced")]
+    SettingsAdvanced {},
+    #[route("/settings/advanced/proofs")]
+    Proofs {},
+    #[route("/settings/advanced/proofs/generate")]
+    GenerateProof {},
+    #[route("/settings/advanced/proofs/verify")]
+    VerifyProof {},
+    #[route("/settings/advanced/proofs/verify-cross-chain")]
+    VerifyCrossChainProof {},
+    #[route("/settings/advanced/validate")]
+    Validate {},
+    #[route("/settings/advanced/validate/consignment")]
+    ValidateConsignment {},
+    #[route("/settings/advanced/validate/offline")]
+    OfflineVerify {},
+    #[route("/settings/advanced/validate/proof")]
+    ValidateProof {},
+    #[route("/settings/advanced/validate/seal")]
+    ValidateSeal {},
+    #[route("/settings/advanced/validate/commitment-chain")]
+    ValidateCommitmentChain {},
 }

@@ -137,13 +137,13 @@ pub fn Dashboard() -> Element {
 
             // Quick Actions
             div { class: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4",
-                Link { to: Route::CreateSanad {}, class: "{card_class()} p-5 block",
+                Link { to: Route::AssetCreate {}, class: "{card_class()} p-5 block",
                     div { class: "flex items-center gap-3",
                         span { class: "text-2xl", "\u{1F48E}" },
                         h3 { class: "font-semibold text-sm", "Create Sanad" }
                     }
                 }
-                Link { to: Route::CrossChainTransfer {}, class: "{card_class()} p-5 block",
+                Link { to: Route::ActivityMove {}, class: "{card_class()} p-5 block",
                     div { class: "flex items-center gap-3",
                         span { class: "text-2xl", "\u{21C4}" },
                         h3 { class: "font-semibold text-sm", "Cross-ChainId" }
@@ -155,7 +155,7 @@ pub fn Dashboard() -> Element {
                         h3 { class: "font-semibold text-sm", "Proof Receipts" }
                     }
                 }
-                Link { to: Route::CreateSeal {}, class: "{card_class()} p-5 block",
+                Link { to: Route::AssetSealCreate {}, class: "{card_class()} p-5 block",
                     div { class: "flex items-center gap-3",
                         span { class: "text-2xl", "\u{1F512}" },
                         h3 { class: "font-semibold text-sm", "Create Seal" }
@@ -223,7 +223,7 @@ fn AccountRow(
                     }
                 }
             }
-            Link { to: Route::AccountTransactions { id: account.id.clone() }, class: "text-xs text-blue-400 hover:text-blue-300 ml-4",
+            Link { to: Route::ActivityAccountTransactions { id: account.id.clone() }, class: "text-xs text-blue-400 hover:text-blue-300 ml-4",
                 "View Transactions \u{2192}"
             }
         }

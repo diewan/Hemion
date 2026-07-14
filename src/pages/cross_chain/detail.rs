@@ -1,5 +1,6 @@
 //! Cross-chain transfer detail page.
 
+use crate::components::Inspector;
 use crate::context::use_wallet_context;
 use crate::pages::common::*;
 use crate::routes::Route;
@@ -16,7 +17,7 @@ pub fn TransferDetail(id: String) -> Element {
         return rsx! {
             div { class: "max-w-4xl mx-auto space-y-6",
                 div { class: "flex items-center gap-3",
-                    Link { to: Route::CrossChain {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
+                    Link { to: Route::Activity {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
                     h1 { class: "text-xl font-bold", "Transfer Not Found" }
                 }
                 div { class: "{card_class()} p-6",
@@ -34,9 +35,10 @@ pub fn TransferDetail(id: String) -> Element {
         div { class: "max-w-4xl mx-auto space-y-6",
             // Header
             div { class: "flex items-center gap-3",
-                Link { to: Route::CrossChain {}, class: "{btn_secondary_class()}", "\u{2190} Back to Transfers" }
+                Link { to: Route::Activity {}, class: "{btn_secondary_class()}", "\u{2190} Back to Transfers" }
                 h1 { class: "text-xl font-bold", "Transfer Details" }
             }
+            Inspector { lifecycle: None }
 
             // Transfer Overview Card
             div { class: "{card_class()} p-6",

@@ -20,7 +20,7 @@ pub fn TransactionCard(transaction: TransactionRecord) -> Element {
 
     rsx! {
         Link {
-            to: Route::TransactionDetail { id: transaction.id.clone() },
+            to: Route::ActivityTransactionDetail { id: transaction.id.clone() },
             class: "{card_class()} p-4 block card-hover",
             div { class: "flex items-center justify-between",
                 div { class: "flex items-center gap-3",
