@@ -11,8 +11,8 @@
 //! - `settings` - Application settings
 //! - `common` - Shared UI helpers
 //!
-//! Note: During the migration from old_pages.rs, some modules re-export
-//! components from old_pages. These will be fully migrated incrementally.
+//! The route layer exposes only the current application URLs; removed URLs are
+//! intentionally not redirected.
 
 // Common UI helpers (fully migrated)
 pub mod common;
@@ -44,21 +44,13 @@ pub use accounts::{AccountTransactions, Dashboard};
 pub use sanads::{ConsumeSanad, CreateSanad, SanadJourney, Sanads, ShowSanad, TransferSanad};
 
 // Re-exports from proofs module
-pub use proofs::{GenerateProof, ProofBundlePage, Proofs, VerifyCrossChainProof, VerifyProof};
+pub use proofs::{GenerateProof, Proofs, VerifyCrossChainProof, VerifyProof};
 pub use redirect::{
     Activity, ActivityAccountTransactions, ActivityMove, ActivityRetry, ActivityStatus,
     ActivityTransactionDetail, ActivityTransferDetail, AssetCollectibleDetail, AssetCollectibles,
     AssetCollections, AssetConsume, AssetCreate, AssetDetail, AssetJourney, AssetSealConsume,
     AssetSealCreate, AssetSealRegistry, AssetSealVerify, AssetSeals, AssetTransfer, AssetWallet,
-    Assets, Contacts, LegacyAccountTransactions, LegacyConsumeSanad, LegacyConsumeSeal,
-    LegacyCreateSanad, LegacyCreateSeal, LegacyCrossChain, LegacyCrossChainRetry,
-    LegacyCrossChainStatus, LegacyCrossChainTransfer, LegacyNftCollections, LegacyNftDetail,
-    LegacyNftGallery, LegacyOfflineVerify, LegacyProofs, LegacySanadJourney, LegacySanads,
-    LegacySealRegistry, LegacySeals, LegacyShowSanad, LegacyTransactionDetail, LegacyTransactions,
-    LegacyTransferDetail, LegacyTransferSanad, LegacyValidate, LegacyValidateCommitmentChain,
-    LegacyValidateConsignment, LegacyValidateProof, LegacyValidateSeal,
-    LegacyVerifyCrossChainProof, LegacyVerifyProof, LegacyVerifySeal, LegacyWalletPage,
-    RedirectProofBundle, RedirectToAdvanced,
+    Assets, Contacts,
 };
 
 // Re-exports from cross_chain module

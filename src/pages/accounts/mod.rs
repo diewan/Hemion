@@ -149,10 +149,10 @@ pub fn Dashboard() -> Element {
                         h3 { class: "font-semibold text-sm", "Cross-ChainId" }
                     }
                 }
-                Link { to: Route::Proofs {}, class: "{card_class()} p-5 block",
+                Link { to: Route::SettingsAdvanced {}, class: "{card_class()} p-5 block",
                     div { class: "flex items-center gap-3",
                         span { class: "text-2xl", "\u{1F4C4}" },
-                        h3 { class: "font-semibold text-sm", "Proof Receipts" }
+                        h3 { class: "font-semibold text-sm", "Advanced tools" }
                     }
                 }
                 Link { to: Route::AssetSealCreate {}, class: "{card_class()} p-5 block",

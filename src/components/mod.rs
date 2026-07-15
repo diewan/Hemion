@@ -21,7 +21,7 @@ pub use design_tokens::{SealState, inject_design_tokens, seal_state_class};
 pub use dropdown::Dropdown;
 pub use hash_display::{AddressDisplay, HashDisplay, TxHashDisplay, shorten_hash};
 pub use header::Header;
-pub use inspector::Inspector;
+pub use inspector::{Inspector, InspectorProofs};
 pub use onboarding::{OnboardingChecklist, OnboardingFlow, OnboardingStep};
 pub use proof_view::{CrossChainProof, ProofInspector, ProofStatus, ValidatorSignature};
 pub use review::{InboundIntentReview, TransferReview, TransferReviewIntent};

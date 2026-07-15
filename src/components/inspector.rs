@@ -1,14 +1,25 @@
 //! Local, evidence-first inspector for runtime lifecycle projections.
 
-use crate::context::TransferLifecycleView;
+use crate::context::{ProofRecord, ProofStatus, TransferLifecycleView};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use dioxus::prelude::*;
+
+/// Component props need equality, while proof records intentionally do not
+/// expose one. Evidence is always refreshed when its parent renders.
+#[derive(Clone)]
+pub struct InspectorProofs(pub Vec<ProofRecord>);
+
+impl PartialEq for InspectorProofs {
+    fn eq(&self, _: &Self) -> bool {
+        false
+    }
+}
 
 /// One responsive implementation serves as a right drawer on wide layouts
 /// and a bottom sheet on narrow layouts. It never navigates or fetches remote
 /// evidence when opened.
 #[component]
-pub fn Inspector(lifecycle: Option<TransferLifecycleView>) -> Element {
+pub fn Inspector(lifecycle: Option<TransferLifecycleView>, proofs: InspectorProofs) -> Element {
     let mut open = use_signal(|| false);
     let mut tab = use_signal(|| "overview");
     let mut trigger = use_signal(|| None::<MountedEvent>);
@@ -143,6 +154,7 @@ pub fn Inspector(lifecycle: Option<TransferLifecycleView>) -> Element {
                             }
                             p { class: "text-xs text-gray-400", "Provenance: {verification_provenance}" }
                         }
+                        {proof_evidence(&proofs.0)}
                     }
                 } else {
                     div { class: "space-y-3 text-xs font-mono break-all",
@@ -213,4 +225,53 @@ fn artifact(label: &'static str, value: &str) -> Element {
 
 fn artifact_opt(label: &'static str, value: Option<&str>) -> Element {
     rsx! { if let Some(value) = value { {artifact(label, value)} } }
+}
+
+/// Recorded proof receipts are entity-local evidence. Their presence never
+/// upgrades an asset or transfer to verified: that authority remains with the
+/// runtime receipt shown above.
+fn proof_evidence(proofs: &[ProofRecord]) -> Element {
+    rsx! {
+        div { class: "rounded border border-gray-800 p-3 space-y-3",
+            p { class: "font-medium", "Attached proof receipts" }
+            if proofs.is_empty() {
+                p { class: "text-amber-300", "No proof receipt is attached to this item." }
+            } else {
+                for proof in proofs {
+                    {
+                        let proof_reference = proof.seal_ref.as_deref().unwrap_or("unreferenced");
+                        rsx! {
+                    div { class: "rounded border border-gray-800 bg-gray-900/40 p-3 space-y-1",
+                        p { class: "font-mono text-xs break-all", "Proof: {proof_reference}" }
+                        p { class: "text-xs text-gray-300", "Chain: {proof.chain}; type: {proof.proof_type}" }
+                        p { class: "text-xs text-gray-300", "Recorded status: {proof.status}" }
+                        if let Some(tx_hash) = proof.verification_tx_hash.as_deref() {
+                            p { class: "font-mono text-xs break-all text-gray-400", "Anchor transaction: {tx_hash}" }
+                        }
+                        if let Some(data) = proof.proof_data.as_deref() {
+                            details { class: "text-xs",
+                                summary { class: "cursor-pointer text-blue-300", "Recorded proof material" }
+                                pre { class: "mt-2 whitespace-pre-wrap break-all text-gray-400", "{data}" }
+                            }
+                        }
+                        if proof.status != ProofStatus::Verified {
+                            p { class: "text-xs text-amber-300", "This recorded receipt is not cryptographic acceptance." }
+                        }
+                    }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn inspector_keeps_proof_receipts_in_entity_evidence() {
+        let source = include_str!("inspector.rs");
+        assert!(source.contains("Attached proof receipts"));
+        assert!(source.contains("not cryptographic acceptance"));
+    }
 }

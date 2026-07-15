@@ -1,6 +1,6 @@
 //! Cross-chain transfer detail page.
 
-use crate::components::Inspector;
+use crate::components::{Inspector, InspectorProofs};
 use crate::context::use_wallet_context;
 use crate::pages::common::*;
 use crate::routes::Route;
@@ -38,7 +38,7 @@ pub fn TransferDetail(id: String) -> Element {
                 Link { to: Route::Activity {}, class: "{btn_secondary_class()}", "\u{2190} Back to Transfers" }
                 h1 { class: "text-xl font-bold", "Transfer Details" }
             }
-            Inspector { lifecycle: None }
+            Inspector { lifecycle: None, proofs: InspectorProofs(Vec::new()) }
 
             // Transfer Overview Card
             div { class: "{card_class()} p-6",

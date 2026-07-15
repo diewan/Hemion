@@ -1,6 +1,6 @@
 //! Show sanad details page.
 
-use crate::components::Inspector;
+use crate::components::{Inspector, InspectorProofs};
 use crate::context::use_wallet_context;
 use crate::pages::common::*;
 use crate::routes::Route;
@@ -10,6 +10,7 @@ use dioxus::prelude::*;
 pub fn ShowSanad(id: String) -> Element {
     let mut wallet_ctx = use_wallet_context();
     let sanad = wallet_ctx.get_sanad(&id);
+    let proofs = wallet_ctx.proofs_for_sanad(&id);
     let mut deleted = use_signal(|| false);
 
     rsx! {
@@ -18,7 +19,7 @@ pub fn ShowSanad(id: String) -> Element {
                 Link { to: Route::Assets {}, class: "{btn_secondary_class()}", "\u{2190} Back" }
                 h1 { class: "text-xl font-bold", "Sanad Details" }
             }
-            Inspector { lifecycle: None }
+            Inspector { lifecycle: None, proofs: InspectorProofs(proofs) }
 
             if deleted() {
                 div { class: "{card_class()} p-6",

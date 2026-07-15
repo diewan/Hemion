@@ -1,6 +1,6 @@
 //! Cross-chain transfer page.
 
-use crate::components::{Inspector, TransferReview, TransferReviewIntent};
+use crate::components::{Inspector, InspectorProofs, TransferReview, TransferReviewIntent};
 use crate::context::{SanadStatus, TransferLifecycleView, use_wallet_context};
 use crate::pages::common::*;
 use crate::routes::Route;
@@ -521,7 +521,7 @@ pub fn CrossChainTransfer() -> Element {
                 })}
 
                 if let Some(view) = lifecycle.read().as_ref() {
-                    Inspector { lifecycle: Some(view.clone()) }
+                    Inspector { lifecycle: Some(view.clone()), proofs: InspectorProofs(Vec::new()) }
                 }
 
                 if let Some(err) = error.read().as_ref() {
