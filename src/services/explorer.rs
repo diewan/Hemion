@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// Explorer service configuration.
 pub struct ExplorerConfig {
-    /// Base URL for the CSV Explorer
+    /// Base URL for the Tuppira
     pub base_url: String,
     /// Transaction URL template (e.g., "https://mempool.space/tx/{}")
     pub tx_url_template: String,

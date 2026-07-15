@@ -2805,27 +2805,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "csv-explorer-shared"
-version = "0.1.5"
-dependencies = [
- "chrono",
- "config",
- "csv-hash",
- "csv-protocol",
- "csv-sdk",
- "getrandom 0.2.17",
- "hex",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 1.0.69",
- "toml 0.8.23",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "csv-hash"
 version = "0.1.5"
 dependencies = [
@@ -2934,6 +2913,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "csv-remote"
+version = "0.1.5"
+dependencies = [
+ "async-trait",
+ "csv-chain-ports",
+ "csv-codec",
+ "csv-hash",
+ "csv-protocol",
+ "csv-wire",
+ "reqwest 0.12.28",
+ "send_wrapper",
+]
+
+[[package]]
 name = "csv-runtime"
 version = "0.1.5"
 dependencies = [
@@ -2981,6 +2974,7 @@ dependencies = [
  "csv-observability",
  "csv-proof",
  "csv-protocol",
+ "csv-remote",
  "csv-runtime",
  "csv-storage",
  "csv-verifier",
@@ -4904,7 +4898,6 @@ dependencies = [
  "chrono",
  "console_error_panic_hook",
  "csv-codec",
- "csv-explorer-shared",
  "csv-hash",
  "csv-keys",
  "csv-protocol",
@@ -4939,6 +4932,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.20.1",
  "tracing",
+ "tuppira-shared",
  "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -11029,6 +11023,27 @@ dependencies = [
  "sha1",
  "thiserror 2.0.18",
  "utf-8",
+]
+
+[[package]]
+name = "tuppira-shared"
+version = "0.1.5"
+dependencies = [
+ "chrono",
+ "config",
+ "csv-hash",
+ "csv-protocol",
+ "csv-sdk",
+ "getrandom 0.2.17",
+ "hex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 1.0.69",
+ "toml 0.8.23",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]

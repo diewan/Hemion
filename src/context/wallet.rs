@@ -105,7 +105,7 @@ impl WalletContext {
 
         // Initialize WebSocket subscription manager with default explorer URL
         let explorer_url =
-            std::env::var("EXPLORER_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+            std::env::var("TUPPIRA_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
         let subscription_manager = Arc::new(WalletSubscriptionManager::new(explorer_url));
 
         // Initialize adaptive poller with per-chain intervals

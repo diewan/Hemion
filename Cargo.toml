@@ -104,7 +104,7 @@ serial_test = "3.0"
 # APPS-CONFORMANCE-015: cross-application fixtures exercise the same public
 # contracts that the CLI consumes.  These remain test-only; they do not give
 # the presentation layer protocol authority.
-csv-explorer-shared = { path = "../csv-explorer/shared" }
+tuppira-shared = { path = "../tuppira/shared" }
 csv-testkit = { path = "../parwana/csv-testkit" }
 
 [features]

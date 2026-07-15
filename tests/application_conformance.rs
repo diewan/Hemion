@@ -10,9 +10,9 @@
 mod wallet_contract;
 
 use chrono::Utc;
-use csv_explorer_shared::{
-    EXPLORER_EVENT_SCHEMA_VERSION, ExplorerEventDto, ExplorerEventPayload, ExplorerEventType,
-    ExplorerFinality, FeedProvenance, IndexerFreshness, IndexerFreshnessStatus, Network,
+use tuppira_shared::{
+    TUPPIRA_EVENT_SCHEMA_VERSION, TuppiraEventDto, TuppiraEventPayload, TuppiraEventType,
+    TuppiraFinality, FeedProvenance, IndexerFreshness, IndexerFreshnessStatus, Network,
     ObservedBlock, WALLET_FEED_SCHEMA_VERSION, WalletFeedEnvelope, WalletFeedProjection,
 };
 use csv_hash::chain_id::ChainId;
@@ -202,19 +202,19 @@ fn forged_or_insufficient_finality_contracts_are_rejected_by_wallet() {
     assert!(wallet_contract::canonical_artifact(&event).is_err());
 }
 
-fn feed(finality: ExplorerFinality, freshness: IndexerFreshnessStatus) -> WalletFeedEnvelope {
-    let event = ExplorerEventDto {
-        schema_version: EXPLORER_EVENT_SCHEMA_VERSION,
+fn feed(finality: TuppiraFinality, freshness: IndexerFreshnessStatus) -> WalletFeedEnvelope {
+    let event = TuppiraEventDto {
+        schema_version: TUPPIRA_EVENT_SCHEMA_VERSION,
         chain_id: ChainId::new("bitcoin"),
         network: Network::Testnet,
         contract: "contract".to_string(),
-        event_type: ExplorerEventType::TransferSent,
+        event_type: TuppiraEventType::TransferSent,
         block_height: 100,
         block_hash: "block-100".to_string(),
         transaction_id: "tx-1".to_string(),
         log_index: 0,
         finality,
-        payload: ExplorerEventPayload::TransferSent {
+        payload: TuppiraEventPayload::TransferSent {
             transfer_id: "feed-transfer".to_string(),
             sanad_id: hex::encode([0x11; 32]),
             destination_chain: ChainId::new("sui"),
@@ -254,14 +254,14 @@ fn feed(finality: ExplorerFinality, freshness: IndexerFreshnessStatus) -> Wallet
 
 #[test]
 fn explorer_staleness_and_reorg_never_become_wallet_authority() {
-    let mut stale = feed(ExplorerFinality::Finalized, IndexerFreshnessStatus::Stale);
+    let mut stale = feed(TuppiraFinality::Finalized, IndexerFreshnessStatus::Stale);
     // A stale indexer can describe a finality state, but it cannot claim the
     // verifier's authority.  The envelope validator enforces that distinction.
     stale.provenance.cryptographically_verified = true;
     assert!(stale.validate().is_err());
 
     let mut projection = WalletFeedProjection::default();
-    let finalized = feed(ExplorerFinality::Finalized, IndexerFreshnessStatus::Fresh);
+    let finalized = feed(TuppiraFinality::Finalized, IndexerFreshnessStatus::Fresh);
     assert!(
         projection
             .apply(finalized)
@@ -270,12 +270,12 @@ fn explorer_staleness_and_reorg_never_become_wallet_authority() {
     assert!(
         !projection
             .apply(feed(
-                ExplorerFinality::Finalized,
+                TuppiraFinality::Finalized,
                 IndexerFreshnessStatus::Fresh
             ))
             .expect("replayed observation is ignored")
     );
-    let mut regressed = feed(ExplorerFinality::Observed, IndexerFreshnessStatus::Fresh);
+    let mut regressed = feed(TuppiraFinality::Observed, IndexerFreshnessStatus::Fresh);
     regressed.observation_id = "observation-2".to_string();
     regressed.sequence = 2;
     assert!(
