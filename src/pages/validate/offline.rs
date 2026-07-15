@@ -536,7 +536,7 @@ fn how_it_works_section() -> Element {
                         }
                     }
                     div {
-                        p { class: "text-blue-400 mb-1", "CSV Protocol" }
+                        p { class: "text-blue-400 mb-1", "Parwana" }
                         ul { class: "space-y-1 text-blue-300",
                             li { "• Canonical proof data is portable" }
                             li { class: "font-semibold", "• Verification is fail-closed" }

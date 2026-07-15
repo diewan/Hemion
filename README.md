@@ -1,6 +1,6 @@
 # Hemion
 
-Standalone multi-chain wallet for the CSV Protocol with a Dioxus-based UI.
+Standalone multi-chain wallet for the Parwana with a Dioxus-based UI.
 
 ## Features
 

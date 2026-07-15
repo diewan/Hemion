@@ -264,7 +264,7 @@ fn security_info_section() -> Element {
                         }
                     }
                     div {
-                        p { class: "text-green-400 mb-2", "CSV Protocol" }
+                        p { class: "text-green-400 mb-2", "Parwana" }
                         ul { class: "space-y-1 text-green-300",
                             li { "• Cryptographic single-use seals" }
                             li { "• ChainId-native enforcement" }

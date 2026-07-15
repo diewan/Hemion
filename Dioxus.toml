@@ -11,8 +11,8 @@ tailwind_output = "assets/tailwind.css"
 identifier = "io.hemion.wallet"
 publisher = "Amin Razavi"
 category = "Finance"
-short_description = "A standalone multi-chain CSV Protocol wallet"
-long_description = "Hemion is a standalone multi-chain wallet for managing CSV Protocol accounts, sanads, seals, and encrypted wallet backups."
+short_description = "A standalone multi-chain Parwana wallet"
+long_description = "Hemion is a standalone multi-chain wallet for managing Parwanaaccounts, sanads, seals, and encrypted wallet backups."
 
 [web.app]
 title = "Hemion"

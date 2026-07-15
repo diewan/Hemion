@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Hemion is an independent repository whose local development manifest
-      # intentionally resolves protocol crates from ../../csv-protocol.
+      # intentionally resolves protocol crates from ../parwana.
       # Recreate that exact sibling layout in CI so a fresh runner proves the
       # same dependency boundary as a developer checkout.
       - name: Check out Hemion
         uses: actions/checkout@v4
         with:
           path: csv-apps/hemion
-      - name: Check out CSV Protocol dependencies
+      - name: Check out Parwana dependencies
         uses: actions/checkout@v4
         with:
           repository: client-side-validation/csv-protocol
@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: csv-apps/hemion
-      - name: Check out CSV Protocol dependencies
+      - name: Check out Parwana dependencies
         uses: actions/checkout@v4
         with:
           repository: client-side-validation/csv-protocol

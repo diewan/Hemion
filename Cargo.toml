@@ -2,11 +2,11 @@
 name = "hemion"
 version = "0.1.0"
 edition = "2024"
-description = "Standalone multi-chain wallet for CSV Protocol with Dioxus UI"
+description = "Standalone multi-chain wallet for Parwana with Dioxus UI"
 license = "MIT OR Apache-2.0"
 authors = ["Amin Razavi"]
-repository = "https://github.com/client-side-validation/csv-protocol"
-homepage = "https://github.com/client-side-validation/csv-protocol"
+repository = "https://github.com/diewan/parwana"
+homepage = "https://github.com/diewan/parwana"
 readme = "README.md"
 publish = false
 
@@ -15,20 +15,20 @@ name = "hemion"
 path = "src/main.rs"
 
 [dependencies]
-# Core CSV Protocol types (resolved against ../csv-protocol)
-csv-verifier = { path = "../../csv-protocol/csv-verifier" }
-csv-store = { path = "../../csv-protocol/csv-store", default-features = false, features = ["browser-storage", "encrypted-storage"] }
-csv-keys = { path = "../../csv-protocol/csv-keys", features = ["wasm", "production"] }
+# Core Parwana  types (resolved against ../parwana)
+csv-verifier = { path = "../parwana/csv-verifier" }
+csv-store = { path = "../parwana/csv-store", default-features = false, features = ["browser-storage", "encrypted-storage"] }
+csv-keys = { path = "../parwana/csv-keys", features = ["wasm", "production"] }
 # Canonical identity and protocol-version authorities. The wallet imports these
 # directly rather than rebuilding a compatibility facade over the retired core.
-csv-hash = { path = "../../csv-protocol/csv-hash", features = ["serde"] }
-csv-protocol = { path = "../../csv-protocol/csv-protocol" }
+csv-hash = { path = "../parwana/csv-hash", features = ["serde"] }
+csv-protocol = { path = "../parwana/csv-protocol" }
 # The wallet exchanges only versioned application-contract artifacts.  Wire and
 # canonical codec are explicit dependencies so this boundary is auditable.
-csv-wire = { path = "../../csv-protocol/csv-wire" }
-csv-codec = { path = "../../csv-protocol/csv-codec" }
+csv-wire = { path = "../parwana/csv-wire" }
+csv-codec = { path = "../parwana/csv-codec" }
 # The portable, encrypted wallet envelope shared with csv-cli.  The package is
-csv-wallet = { package = "csv-wallet", path = "../../csv-protocol/csv-wallet", features = ["wasm"] }
+csv-wallet = { package = "csv-wallet", path = "../parwana/csv-wallet", features = ["wasm"] }
 
 # Dioxus UI
 dioxus = { version = "0.7", features = ["web", "router"] }
@@ -86,8 +86,8 @@ base64 = "0.21"
 
 # Native-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-csv-runtime = { path = "../../csv-protocol/csv-runtime", optional = true }
-csv-sdk = { path = "../../csv-protocol/csv-sdk", features = ["bitcoin", "tokio", "wallet", "runtime-coordinator"] }
+csv-runtime = { path = "../parwana/csv-runtime", optional = true }
+csv-sdk = { path = "../parwana/csv-sdk", features = ["bitcoin", "tokio", "wallet", "runtime-coordinator"] }
 tokio = { version = "1.0", features = ["macros", "rt", "sync", "time"] }
 tokio-tungstenite = { version = "0.20", optional = true }
 reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
@@ -96,7 +96,7 @@ rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "a
 
 # WASM-only dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-csv-sdk = { path = "../../csv-protocol/csv-sdk", default-features = false, features = ["wasm"] }
+csv-sdk = { path = "../parwana/csv-sdk", default-features = false, features = ["wasm"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
@@ -105,7 +105,7 @@ serial_test = "3.0"
 # contracts that the CLI consumes.  These remain test-only; they do not give
 # the presentation layer protocol authority.
 csv-explorer-shared = { path = "../csv-explorer/shared" }
-csv-testkit = { path = "../../csv-protocol/csv-testkit" }
+csv-testkit = { path = "../parwana/csv-testkit" }
 
 [features]
 default = ["native"]
@@ -125,4 +125,4 @@ web-sys = { version = "0.3", features = ["Window", "console"] }
 gloo-timers = { version = "0.3", features = ["futures"] }
 
 [patch.crates-io]
-spl-token-2022-interface = { path = "../../csv-protocol/third_party/spl-token-2022-interface" }
+spl-token-2022-interface = { path = "../parwana/third_party/spl-token-2022-interface" }
