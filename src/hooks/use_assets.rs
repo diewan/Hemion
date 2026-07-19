@@ -2,7 +2,7 @@
 
 use dioxus::prelude::*;
 use crate::assets::tracker::AssetRecord;
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 
 /// Asset state.
 #[derive(Clone, PartialEq)]

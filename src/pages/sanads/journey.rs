@@ -715,7 +715,7 @@ fn commitment_node(
 struct CommitmentNode {
     hash: String,
     previous_hash: String,
-    chain: csv_hash::ChainId,
+    chain: csv_sdk::protocol::hash::ChainId,
     anchor_tx: Option<String>,
     timestamp: Option<u64>,
 }

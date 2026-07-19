@@ -2,7 +2,7 @@
 //!
 //! This module provides browser-specific localStorage persistence.
 
-pub use csv_store::browser_storage::*;
+pub use csv_sdk::consumer_storage::browser_storage::*;
 
 /// Backward-compatible type alias for storage error.
 pub type StorageError = BrowserStorageError;

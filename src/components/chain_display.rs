@@ -2,7 +2,7 @@
 
 use crate::chains::supported_wallet_chains;
 use crate::context::Network;
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 
 /// Display wrapper for ChainId with emoji and name.
 pub struct ChainDisplay(pub ChainId);

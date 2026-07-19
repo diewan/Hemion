@@ -15,8 +15,8 @@
 //! - Lazy loading with cursor-based iteration
 //! - Connection pooling for database access
 
-use csv_hash::{ChainId, SanadId};
-use csv_protocol::{OwnershipProof, Sanad};
+use csv_sdk::protocol::hash::{ChainId, SanadId};
+use csv_sdk::protocol::{OwnershipProof, Sanad};
 use indexed_db_futures::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::sync::Arc;

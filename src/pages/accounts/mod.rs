@@ -6,7 +6,7 @@ use crate::hooks::{AccountBalance, format_balance_display};
 use crate::pages::common::*;
 use crate::routes::Route;
 use crate::wallet::account::ChainAccount;
-pub use csv_hash::ChainId;
+pub use csv_sdk::protocol::hash::ChainId;
 use dioxus::prelude::*;
 use std::collections::HashMap;
 

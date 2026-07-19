@@ -19,26 +19,26 @@ where
         .validate()
         .map_err(|error| format!("invalid runtime contract: {error}"))?;
 
-    let wire_bytes = csv_wire::app::encode(artifact)
+    let wire_bytes = csv_sdk::canonical::app::encode(artifact)
         .map_err(|error| format!("could not encode runtime contract: {error}"))?;
-    let codec_bytes = csv_codec::to_canonical_cbor(artifact)
+    let codec_bytes = csv_sdk::canonical::to_canonical_cbor(artifact)
         .map_err(|error| format!("could not canonically encode runtime contract: {error}"))?;
     if wire_bytes != codec_bytes {
         return Err("runtime contract has inconsistent canonical encoding".to_string());
     }
 
-    csv_wire::app::decode(&wire_bytes)
+    csv_sdk::canonical::app::decode(&wire_bytes)
         .map_err(|error| format!("could not decode runtime contract: {error}"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::canonical_artifact;
+    use csv_sdk::canonical::SanadIdWire;
     use csv_sdk::contract::{
         NextAction, ReceiptBody, SendBody, TransferEvent, TransferMode, TransferPhase,
         TransferReceipt,
     };
-    use csv_wire::SanadIdWire;
 
     #[test]
     fn rejects_an_incomplete_runtime_artifact() {
@@ -74,12 +74,12 @@ mod tests {
                     bytes: hex::encode([0x11u8; 32]),
                 },
                 source_chain: "bitcoin".to_string(),
-                source_seal: csv_wire::SealPointWire {
+                source_seal: csv_sdk::canonical::SealPointWire {
                     id: hex::encode([0x22u8; 32]),
                     nonce: None,
                     version: None,
                 },
-                destination_seal: csv_wire::SealPointWire {
+                destination_seal: csv_sdk::canonical::SealPointWire {
                     id: hex::encode([0x33u8; 32]),
                     nonce: None,
                     version: None,

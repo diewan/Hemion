@@ -362,7 +362,7 @@ impl TransferLifecycleView {
 }
 
 fn encoded_artifact<T: ContractArtifact>(artifact: &T) -> (Option<String>, Option<String>) {
-    match csv_wire::app::encode(artifact) {
+    match csv_sdk::canonical::app::encode(artifact) {
         Ok(bytes) => {
             let digest = hex::encode(Sha256::digest(&bytes));
             (Some(hex::encode(bytes)), Some(digest))
@@ -397,8 +397,8 @@ impl From<&TransferEvent> for TransferViewModel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use csv_sdk::canonical::SanadIdWire;
     use csv_sdk::contract::FinalityEvidence;
-    use csv_wire::SanadIdWire;
 
     fn event(phase: TransferPhase, observed_at: u64) -> TransferEvent {
         TransferEvent::new(
@@ -463,7 +463,7 @@ mod tests {
     #[test]
     fn inspector_export_preserves_the_exact_versioned_wire_artifact() {
         let source = event(TransferPhase::Admitted, 7);
-        let expected = csv_wire::app::encode(&source).expect("event wire artifact");
+        let expected = csv_sdk::canonical::app::encode(&source).expect("event wire artifact");
         let view = TransferLifecycleView::from_event(&source);
 
         assert_eq!(

@@ -3,8 +3,8 @@
 //! Each account belongs to a specific chain and uses secure keystore references.
 //! Private keys are never stored in memory longer than necessary for signing.
 
-use csv_hash::ChainId;
-use csv_keys::bip44::derive_address_from_chain_id_with_network;
+use csv_sdk::key_management::bip44::derive_address_from_chain_id_with_network;
+use csv_sdk::protocol::hash::ChainId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

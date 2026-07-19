@@ -12,7 +12,7 @@
 //! - Hardware security module integration points
 
 use chrono::{DateTime, Utc};
-use csv_keys::{
+use csv_sdk::key_management::{
     file_keystore::FileKeystore,
     memory::{Passphrase, SecretKey},
 };
@@ -43,34 +43,34 @@ pub enum NativeKeystoreError {
     KeyRotationRequired,
 }
 
-impl From<csv_keys::file_keystore::FileKeystoreError> for NativeKeystoreError {
-    fn from(e: csv_keys::file_keystore::FileKeystoreError) -> Self {
+impl From<csv_sdk::key_management::file_keystore::FileKeystoreError> for NativeKeystoreError {
+    fn from(e: csv_sdk::key_management::file_keystore::FileKeystoreError) -> Self {
         match e {
-            csv_keys::file_keystore::FileKeystoreError::KeyNotFound(id) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::KeyNotFound(id) => {
                 NativeKeystoreError::KeyNotFound(id)
             }
-            csv_keys::file_keystore::FileKeystoreError::Crypto(msg) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::Crypto(msg) => {
                 NativeKeystoreError::Encryption(msg)
             }
-            csv_keys::file_keystore::FileKeystoreError::Io(io) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::Io(io) => {
                 NativeKeystoreError::Filesystem(io.to_string())
             }
-            csv_keys::file_keystore::FileKeystoreError::Serialization(json) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::Serialization(json) => {
                 NativeKeystoreError::Filesystem(format!("Serialization error: {}", json))
             }
-            csv_keys::file_keystore::FileKeystoreError::DirectoryNotFound(msg) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::DirectoryNotFound(msg) => {
                 NativeKeystoreError::Filesystem(msg)
             }
-            csv_keys::file_keystore::FileKeystoreError::InvalidPassphrase => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::InvalidPassphrase => {
                 NativeKeystoreError::PassphraseMismatch
             }
-            csv_keys::file_keystore::FileKeystoreError::SessionExpired => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::SessionExpired => {
                 NativeKeystoreError::SessionExpired
             }
-            csv_keys::file_keystore::FileKeystoreError::InvalidFormat(s) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::InvalidFormat(s) => {
                 NativeKeystoreError::Encryption(format!("Invalid format: {}", s))
             }
-            csv_keys::file_keystore::FileKeystoreError::Keystore(e) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::Keystore(e) => {
                 NativeKeystoreError::Encryption(format!("Keystore error: {}", e))
             }
         }
@@ -226,10 +226,10 @@ impl NativeKeystore {
             .inner
             .store_key(key_id, chain, label, secret_key, passphrase)
             .map_err(|e| match e {
-                csv_keys::file_keystore::FileKeystoreError::KeyNotFound(_) => {
+                csv_sdk::key_management::file_keystore::FileKeystoreError::KeyNotFound(_) => {
                     NativeKeystoreError::KeyNotFound(key_id.to_string())
                 }
-                csv_keys::file_keystore::FileKeystoreError::Crypto(msg) => {
+                csv_sdk::key_management::file_keystore::FileKeystoreError::Crypto(msg) => {
                     NativeKeystoreError::Encryption(msg)
                 }
                 _ => NativeKeystoreError::Filesystem(e.to_string()),
@@ -293,16 +293,16 @@ impl NativeKeystore {
             .inner
             .retrieve_key(key_id, passphrase)
             .map_err(|e| match e {
-                csv_keys::file_keystore::FileKeystoreError::KeyNotFound(_) => {
+                csv_sdk::key_management::file_keystore::FileKeystoreError::KeyNotFound(_) => {
                     NativeKeystoreError::KeyNotFound(key_id.to_string())
                 }
-                csv_keys::file_keystore::FileKeystoreError::InvalidPassphrase => {
+                csv_sdk::key_management::file_keystore::FileKeystoreError::InvalidPassphrase => {
                     NativeKeystoreError::PassphraseMismatch
                 }
-                csv_keys::file_keystore::FileKeystoreError::SessionExpired => {
+                csv_sdk::key_management::file_keystore::FileKeystoreError::SessionExpired => {
                     NativeKeystoreError::SessionExpired
                 }
-                csv_keys::file_keystore::FileKeystoreError::Keystore(_) => {
+                csv_sdk::key_management::file_keystore::FileKeystoreError::Keystore(_) => {
                     NativeKeystoreError::Encryption("Keystore error".to_string())
                 }
                 _ => NativeKeystoreError::Encryption(e.to_string()),
@@ -335,7 +335,7 @@ impl NativeKeystore {
     /// Delete a stored key from the keystore.
     pub fn delete_key(&mut self, key_id: &str) -> Result<(), NativeKeystoreError> {
         self.inner.delete_key(key_id).map_err(|e| match e {
-            csv_keys::file_keystore::FileKeystoreError::KeyNotFound(_) => {
+            csv_sdk::key_management::file_keystore::FileKeystoreError::KeyNotFound(_) => {
                 NativeKeystoreError::KeyNotFound(key_id.to_string())
             }
             _ => NativeKeystoreError::Filesystem(e.to_string()),
@@ -350,10 +350,12 @@ impl NativeKeystore {
     ) -> Result<bool, NativeKeystoreError> {
         match self.inner.verify_passphrase(key_id, passphrase) {
             Ok(_) => Ok(true),
-            Err(csv_keys::file_keystore::FileKeystoreError::KeyNotFound(_)) => Ok(false),
+            Err(csv_sdk::key_management::file_keystore::FileKeystoreError::KeyNotFound(_)) => {
+                Ok(false)
+            }
             Err(
-                csv_keys::file_keystore::FileKeystoreError::InvalidPassphrase
-                | csv_keys::file_keystore::FileKeystoreError::SessionExpired,
+                csv_sdk::key_management::file_keystore::FileKeystoreError::InvalidPassphrase
+                | csv_sdk::key_management::file_keystore::FileKeystoreError::SessionExpired,
             ) => Ok(false),
             Err(e) => Err(NativeKeystoreError::Encryption(e.to_string())),
         }
@@ -604,7 +606,7 @@ impl NativeKeystore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use csv_keys::memory::Passphrase;
+    use csv_sdk::key_management::memory::Passphrase;
     use rand::RngCore;
 
     fn test_passphrase() -> Passphrase {

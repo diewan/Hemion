@@ -4,7 +4,7 @@ use crate::context::{ReceiptBody, TransferViewModel};
 use crate::pages::common::*;
 use crate::routes::Route;
 use crate::services::transfer_authority::{ResumeRequest, TransferSubmission, resume_transfer};
-use csv_hash::{ChainId, SanadId};
+use csv_sdk::protocol::hash::{ChainId, SanadId};
 use dioxus::prelude::*;
 
 fn parse_sanad_id(value: &str) -> Result<SanadId, String> {

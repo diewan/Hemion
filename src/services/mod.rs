@@ -7,6 +7,7 @@ pub mod chain_api;
 pub mod explorer;
 pub mod http;
 pub mod network;
+pub mod observation;
 pub mod platform;
 pub mod rpc_settings;
 pub mod subscription;

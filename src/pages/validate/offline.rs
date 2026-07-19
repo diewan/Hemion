@@ -9,8 +9,8 @@
 
 use crate::pages::common::*;
 use crate::routes::Route;
-use csv_protocol::ProofBundle;
-use csv_verifier::verify_proof;
+use csv_sdk::protocol::ProofBundle;
+use csv_sdk::verification::verify_proof;
 use dioxus::html::FileData;
 use dioxus::prelude::*;
 

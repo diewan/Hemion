@@ -3,7 +3,7 @@
 //! Provides blockchain operations through csv-runtime.
 //! Supports both native and browser wallet contexts.
 
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;

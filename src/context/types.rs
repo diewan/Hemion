@@ -7,7 +7,7 @@
 //! lifecycle state, permitted actions, finality evidence, and recovery authority
 //! are rendered from the versioned `csv_sdk::contract` artifacts instead.
 //!
-//! Canonical chain identifier: `csv_hash::ChainId` (string-based, extensible).
+//! Canonical chain identifier: `csv_sdk::protocol::hash::ChainId` (string-based, extensible).
 //! Wallet-specific types (NFT, SealContent) that don't exist in csv-store
 //! are defined locally.
 
@@ -42,7 +42,7 @@ impl std::fmt::Display for Network {
 
 // Re-export canonical domain types from csv-store (no duplicates).
 #[allow(unused_imports)]
-pub use csv_store::state::domain::{
+pub use csv_sdk::consumer_storage::state::domain::{
     ContractRecord, ProofRecord, ProofStatus, SanadRecord as TrackedSanad, SanadStatus, SealRecord,
     SealStatus, TransactionRecord, TransactionStatus, TransactionType,
     TransferRecord as TrackedTransfer, TransferStatus,
@@ -50,10 +50,12 @@ pub use csv_store::state::domain::{
 
 // Re-export wallet account types.
 #[allow(unused_imports)]
-pub use csv_store::state::wallet::{FaucetConfig, GasAccount, WalletAccount, WalletConfig};
+pub use csv_sdk::consumer_storage::state::wallet::{
+    FaucetConfig, GasAccount, WalletAccount, WalletConfig,
+};
 
 // Canonical chain identifier.
-pub use csv_hash::ChainId;
+pub use csv_sdk::protocol::hash::ChainId;
 
 /// Versioned runtime artifacts that the Dioxus presentation renders.
 ///

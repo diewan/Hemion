@@ -8,6 +8,21 @@ use std::path::{Path, PathBuf};
 
 const FORBIDDEN_MANIFEST_DEPENDENCIES: &[&str] = &[
     "csv-core",
+    "csv-runtime",
+    "csv-store",
+    "csv-storage",
+    "csv-wallet",
+    "csv-keys",
+    "csv-wire",
+    "csv-codec",
+    "csv-protocol",
+    "csv-hash",
+    "csv-proof",
+    "csv-verifier",
+    "csv-coordinator",
+    "csv-admission",
+    "csv-adapter-factory",
+    "tuppira-shared",
     "csv-bitcoin",
     "csv-ethereum",
     "csv-solana",
@@ -19,6 +34,18 @@ const FORBIDDEN_MANIFEST_DEPENDENCIES: &[&str] = &[
 
 const FORBIDDEN_SOURCE_IMPORTS: &[&str] = &[
     "csv_core::",
+    "csv_runtime::",
+    "csv_store::",
+    "csv_storage::",
+    "csv_wallet::",
+    "csv_keys::",
+    "csv_wire::",
+    "csv_codec::",
+    "csv_protocol::",
+    "csv_hash::",
+    "csv_proof::",
+    "csv_verifier::",
+    "tuppira_shared::",
     "use csv_bitcoin::",
     "use csv_ethereum::",
     "use csv_solana::",
@@ -33,16 +60,13 @@ const FORBIDDEN_SOURCE_IMPORTS: &[&str] = &[
     "csv_sdk::csv_celestia::",
 ];
 
-const REQUIRED_MANIFEST_DEPENDENCIES: &[&str] = &[
-    "csv-hash",
-    "csv-protocol",
-    "csv-wire",
-    "csv-codec",
-    "csv-sdk",
-    "csv-wallet",
-];
+const REQUIRED_MANIFEST_DEPENDENCIES: &[&str] = &["csv-sdk"];
 
-const REQUIRED_SOURCE_MARKERS: &[&str] = &["csv_wire::", "csv_codec::"];
+const REQUIRED_SOURCE_MARKERS: &[&str] = &[
+    "csv_sdk::canonical::",
+    "csv_sdk::verification::",
+    "csv_sdk::protocol::",
+];
 
 const FORBIDDEN_LOCAL_AUTHORITY_MARKERS: &[&str] = &[
     ".consume_seal(",
@@ -124,6 +148,46 @@ fn wallet_declares_and_uses_the_canonical_transport_boundary() {
         "wallet must use canonical wire and codec paths:\n{}",
         violations.join("\n")
     );
+}
+
+#[test]
+fn sdk_dependency_and_contract_are_exactly_pinned() {
+    let manifest = fs::read_to_string(manifest_path()).expect("wallet manifest must be readable");
+    assert!(manifest.contains("csv-sdk = { version = \"=0.1.5\""));
+    assert!(!manifest.contains("[patch."));
+    assert!(!manifest.contains("git ="));
+
+    let pin = fs::read_to_string(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".diewan/parwana-contract.toml"),
+    )
+    .expect("Parwana contract pin must be readable");
+    assert!(pin.contains("contract_version = \"0.1.5\""));
+    let commit = pin
+        .lines()
+        .find(|line| line.starts_with("value = \""))
+        .expect("contract source commit must be present");
+    assert_eq!(commit.len(), "value = \"\"".len() + 40);
+}
+
+#[test]
+fn feature_sets_exclude_concrete_and_authority_capabilities() {
+    let manifest = fs::read_to_string(manifest_path()).expect("wallet manifest must be readable");
+    for forbidden in [
+        "runtime-coordinator",
+        "all-chains",
+        "csv-sdk/bitcoin",
+        "csv-sdk/ethereum",
+        "csv-sdk/solana",
+        "csv-sdk/sui",
+        "csv-sdk/aptos",
+        "csv-sdk/p2p",
+        "csv-sdk/sqlite",
+    ] {
+        assert!(
+            !manifest.contains(forbidden),
+            "forbidden SDK capability `{forbidden}`"
+        );
+    }
 }
 
 #[test]

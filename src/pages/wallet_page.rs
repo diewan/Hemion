@@ -9,7 +9,7 @@ use crate::services::platform::{
     PortableFilePort, PortableOpenOutcome,
 };
 use crate::wallet_core::ChainAccount;
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 use dioxus::prelude::*;
 
 #[derive(Clone, Copy, PartialEq)]

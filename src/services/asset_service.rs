@@ -3,7 +3,7 @@
 //! Provides local storage and management of asset records using LocalStorage.
 
 use chrono::{DateTime, Utc};
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 use serde::{Deserialize, Serialize};
 
 use crate::storage::{LocalStorageManager, asset_storage};

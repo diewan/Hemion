@@ -5,7 +5,7 @@
 //! All sensitive data is zeroized on drop to prevent memory leaks.
 
 use blake2::Blake2b;
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 use ed25519_dalek::{Signer, SigningKey, VerifyingKey};
 use secp256k1::{Keypair, Secp256k1, SecretKey, XOnlyPublicKey};
 use sha2::Digest;
@@ -15,7 +15,7 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::core::native_keystore::{NativeKeystore, NativeKeystoreError};
 #[cfg(not(target_arch = "wasm32"))]
-use csv_keys::memory::{Passphrase, SecretKey as MemorySecretKey};
+use csv_sdk::key_management::memory::{Passphrase, SecretKey as MemorySecretKey};
 
 /// Error type for key management operations.
 #[derive(Debug, thiserror::Error)]

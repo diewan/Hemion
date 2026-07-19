@@ -28,7 +28,7 @@ impl Default for AppState {
     fn default() -> Self {
         Self {
             wallet: WalletData::default(),
-            selected_chain: csv_hash::ChainId::new("bitcoin"),
+            selected_chain: csv_sdk::protocol::hash::ChainId::new("bitcoin"),
             selected_network: Network::Test,
             sanads: Vec::new(),
             transfers: Vec::new(),
@@ -85,7 +85,7 @@ mod tests {
     fn ending_a_session_preserves_wallet_and_asset_metadata() {
         let mut state = AppState::default();
         state.wallet.add_account(ChainAccount::watch_only(
-            csv_hash::ChainId::new("bitcoin"),
+            csv_sdk::protocol::hash::ChainId::new("bitcoin"),
             "Savings",
             "bc1qexample",
         ));

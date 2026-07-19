@@ -5,8 +5,8 @@
 //! local.  Neither adapter accepts key material as a command argument.
 
 use async_trait::async_trait;
-use csv_hash::ChainId;
 use csv_sdk::contract::{ContractArtifact, SigningIntent};
+use csv_sdk::protocol::hash::ChainId;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::collections::HashSet;
@@ -172,7 +172,7 @@ impl InboundIntent {
 /// Result of passing an inbound package through the one delivery choke point.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InboundDelivery {
-    PendingReview(InboundIntent),
+    PendingReview(Box<InboundIntent>),
     Duplicate { id: String },
 }
 
@@ -345,14 +345,14 @@ impl LocalDeliveryGate {
                 MAX_INBOUND_INTENT_BYTES
             )));
         }
-        let intent: SigningIntent = csv_wire::app::decode(payload).map_err(|error| {
+        let intent: SigningIntent = csv_sdk::canonical::app::decode(payload).map_err(|error| {
             PlatformError::InboundIntent(format!(
                 "package is not a canonical signing intent: {error}"
             ))
         })?;
         // `decode` recognizes the artifact header; byte-for-byte re-encoding
         // rejects alternate encodings and trailing/partial-trust formats.
-        let canonical = csv_wire::app::encode(&intent).map_err(|error| {
+        let canonical = csv_sdk::canonical::app::encode(&intent).map_err(|error| {
             PlatformError::InboundIntent(format!("intent cannot be canonicalized: {error}"))
         })?;
         if canonical != payload {
@@ -379,7 +379,7 @@ impl DeliveryPort for LocalDeliveryGate {
         if !self.delivered.insert(inbound.id.clone()) {
             return Ok(InboundDelivery::Duplicate { id: inbound.id });
         }
-        Ok(InboundDelivery::PendingReview(inbound))
+        Ok(InboundDelivery::PendingReview(Box::new(inbound)))
     }
 
     fn receive_deep_link(&mut self, url: &str, now: u64) -> Result<InboundDelivery, PlatformError> {
@@ -471,9 +471,9 @@ pub struct RuntimeResponse {
     pub event: RuntimeEvent,
 }
 
-/// Runtime orchestration port.  Transfer commands remain at the existing
-/// `transfer_authority` application contract, which already delegates to the
-/// runtime coordinator and returns canonical receipts/events only.
+/// Read-only runtime port. Transfer mutation remains at the separate
+/// `transfer_authority` boundary and is unavailable without an SDK application
+/// host; this port cannot mutate protocol lifecycle state.
 #[async_trait(?Send)]
 pub trait RuntimePort {
     async fn command(&self, command: RuntimeCommand) -> Result<RuntimeEvent, PlatformError>;
@@ -533,16 +533,16 @@ pub fn validate_signing_intent(
 
     // Re-encode via both canonical authorities.  This detects a non-canonical
     // or mismatched representation before any local key is used.
-    let wire = csv_wire::app::encode(intent)
+    let wire = csv_sdk::canonical::app::encode(intent)
         .map_err(|error| PlatformError::InvalidSigningIntent(error.to_string()))?;
-    let codec = csv_codec::to_canonical_cbor(intent)
+    let codec = csv_sdk::canonical::to_canonical_cbor(intent)
         .map_err(|error| PlatformError::InvalidSigningIntent(error.to_string()))?;
     if wire != codec {
         return Err(PlatformError::InvalidSigningIntent(
             "intent has inconsistent canonical encoding".to_string(),
         ));
     }
-    let decoded: SigningIntent = csv_wire::app::decode(&wire)
+    let decoded: SigningIntent = csv_sdk::canonical::app::decode(&wire)
         .map_err(|error| PlatformError::InvalidSigningIntent(error.to_string()))?;
     if decoded != *intent {
         return Err(PlatformError::InvalidSigningIntent(
@@ -768,8 +768,8 @@ mod tests {
         MAX_INBOUND_INTENT_BYTES, PlatformCapabilities, PlatformError, PlatformTarget,
         validate_signing_intent,
     };
+    use csv_sdk::canonical::{SanadIdWire, SealPointWire};
     use csv_sdk::contract::{IntentOperation, IntentValue, SigningIntent};
-    use csv_wire::{SanadIdWire, SealPointWire};
 
     fn intent(created_at: u64) -> SigningIntent {
         SigningIntent::new(
@@ -852,7 +852,7 @@ mod tests {
     #[test]
     fn malformed_or_truncated_canonical_payload_never_becomes_pending() {
         let mut gate = LocalDeliveryGate::default();
-        let mut encoded = csv_wire::app::encode(&intent(10)).expect("canonical intent");
+        let mut encoded = csv_sdk::canonical::app::encode(&intent(10)).expect("canonical intent");
         encoded.pop();
         assert!(matches!(
             gate.receive(InboundOrigin::ScannedQr, &encoded, 11),
@@ -864,7 +864,7 @@ mod tests {
     #[test]
     fn inbound_delivery_is_pending_review_and_duplicate_delivery_is_idempotent() {
         let mut gate = LocalDeliveryGate::default();
-        let encoded = csv_wire::app::encode(&intent(10)).expect("canonical intent");
+        let encoded = csv_sdk::canonical::app::encode(&intent(10)).expect("canonical intent");
         let first = gate
             .receive(InboundOrigin::BrowserLink, &encoded, 11)
             .expect("pending review");
@@ -885,7 +885,8 @@ mod tests {
     #[test]
     fn deep_link_is_only_an_unapproved_browser_delivery() {
         let mut gate = LocalDeliveryGate::default();
-        let encoded = hex::encode(csv_wire::app::encode(&intent(10)).expect("canonical intent"));
+        let encoded =
+            hex::encode(csv_sdk::canonical::app::encode(&intent(10)).expect("canonical intent"));
         let delivery = gate
             .receive_deep_link(&format!("hemion://accept?intent={encoded}"), 11)
             .expect("deep link is parsed");

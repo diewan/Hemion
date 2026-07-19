@@ -1,7 +1,7 @@
 //! Browser wallet connection hook.
 
 use crate::services::blockchain::{BrowserWallet, WalletType, wallet_connection};
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 use dioxus::prelude::*;
 
 /// Wallet connection state.

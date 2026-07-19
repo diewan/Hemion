@@ -1,6 +1,6 @@
 //! ChainId-specific integrations.
 
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 
 pub mod aptos;
 pub mod bitcoin;

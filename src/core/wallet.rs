@@ -5,15 +5,15 @@
 //! with scrypt KDF, session management, and security policy enforcement.
 //! All sensitive data is zeroized on drop to prevent memory leaks.
 
-use csv_hash::ChainId;
-use csv_keys::bip39::{Mnemonic, MnemonicType};
+use csv_sdk::key_management::bip39::{Mnemonic, MnemonicType};
+use csv_sdk::protocol::hash::ChainId;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::core::native_keystore::{NativeKeystore, NativeKeystoreError, SecurityPolicy};
-use csv_keys::memory::{Passphrase, SecretKey};
+use csv_sdk::key_management::memory::{Passphrase, SecretKey};
 
 /// Wallet metadata.
 #[derive(Debug, Clone, Serialize, Deserialize)]

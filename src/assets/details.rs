@@ -2,8 +2,8 @@
 //!
 //! Provides detailed information about individual assets.
 
-use csv_hash::ChainId;
-use csv_protocol::Sanad;
+use csv_sdk::protocol::hash::ChainId;
+use csv_sdk::protocol::Sanad;
 use serde::{Serialize, Deserialize};
 
 /// Detailed asset information.

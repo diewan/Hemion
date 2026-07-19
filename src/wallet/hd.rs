@@ -4,8 +4,8 @@
 //! for multiple chains from a single seed.
 
 use crate::wallet::metadata::WalletMetadata;
-use csv_hash::ChainId;
-use csv_keys::bip39::{Mnemonic, MnemonicType};
+use csv_sdk::key_management::bip39::{Mnemonic, MnemonicType};
+use csv_sdk::protocol::hash::ChainId;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -164,7 +164,7 @@ impl ExtendedWallet {
 
     /// Get addresses for all chains.
     pub fn all_addresses(&self) -> Vec<(ChainId, String)> {
-        use csv_keys::bip44::{derive_address_from_key, derive_all_chain_keys};
+        use csv_sdk::key_management::bip44::{derive_address_from_key, derive_all_chain_keys};
 
         let mut addresses = Vec::new();
         let keys = derive_all_chain_keys(&self.seed, 0);

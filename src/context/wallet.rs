@@ -5,14 +5,14 @@ use crate::context::types::*;
 use crate::services::subscription::{AdaptivePoller, WalletSubscriptionManager};
 use crate::storage::{self, LocalStorageManager, UNIFIED_STORAGE_KEY, WALLET_MNEMONIC_KEY};
 use crate::wallet_core::{ChainAccount, WalletData};
-use csv_wallet::format::{self, KeySource, KeySourceKind, KnownAccount, WalletPayload};
+use csv_sdk::wallet_format::format::{self, KeySource, KeySourceKind, KnownAccount, WalletPayload};
 use dioxus::prelude::*;
 use std::sync::{Arc, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 use zeroize::{Zeroize, Zeroizing};
 
 #[cfg(target_arch = "wasm32")]
-use csv_store::{EncryptedStorageManager, seal_nullifier_storage};
+use csv_sdk::consumer_storage::{EncryptedStorageManager, seal_nullifier_storage};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::core::native_keystore::{NativeKeystore, NativeKeystoreError};
@@ -230,15 +230,15 @@ impl WalletContext {
 
         // Load app state (sanads, seals, etc.)
         if let Some(persisted) =
-            store.try_load::<csv_store::state::UnifiedStorage>(UNIFIED_STORAGE_KEY)
+            store.try_load::<csv_sdk::consumer_storage::state::UnifiedStorage>(UNIFIED_STORAGE_KEY)
         {
             // selected_chain is now ChainId (string) - no conversion needed
             if let Some(c) = persisted.selected_chain {
                 s.selected_chain = c;
             }
             s.selected_network = match persisted.selected_network {
-                Some(csv_store::state::Network::Dev) => Network::Dev,
-                Some(csv_store::state::Network::Main) => Network::Main,
+                Some(csv_sdk::consumer_storage::state::Network::Dev) => Network::Dev,
+                Some(csv_sdk::consumer_storage::state::Network::Main) => Network::Main,
                 _ => Network::Test,
             };
             // Types are now the same - just clone
@@ -298,15 +298,15 @@ impl WalletContext {
         let Some(store) = &self.store else { return };
         let s = self.state.read();
 
-        let persisted = csv_store::state::UnifiedStorage {
+        let persisted = csv_sdk::consumer_storage::state::UnifiedStorage {
             version: 1,
             initialized: !s.wallet.is_empty(),
             // selected_chain is now ChainId (string) - no conversion needed
             selected_chain: Some(s.selected_chain.clone()),
             selected_network: Some(match s.selected_network {
-                Network::Dev => csv_store::state::Network::Dev,
-                Network::Test => csv_store::state::Network::Test,
-                Network::Main => csv_store::state::Network::Main,
+                Network::Dev => csv_sdk::consumer_storage::state::Network::Dev,
+                Network::Test => csv_sdk::consumer_storage::state::Network::Test,
+                Network::Main => csv_sdk::consumer_storage::state::Network::Main,
             }),
             // Types are now the same - just clone
             sanads: s.sanads.to_vec(),
@@ -316,7 +316,7 @@ impl WalletContext {
             contracts: s.contracts.to_vec(),
             // Default/empty fields
             chains: std::collections::HashMap::new(),
-            wallet: csv_store::state::WalletConfig::default(),
+            wallet: csv_sdk::consumer_storage::state::WalletConfig::default(),
             faucets: std::collections::HashMap::new(),
             transactions: Vec::new(),
             gas_accounts: Vec::new(),
@@ -443,7 +443,7 @@ impl WalletContext {
             return Err("Unlock the wallet before exporting signing keys".to_string());
         }
         let accounts = self.accounts();
-        let passphrase = csv_keys::memory::Passphrase::new(vault_passphrase);
+        let passphrase = csv_sdk::key_management::memory::Passphrase::new(vault_passphrase);
         let mut payload = WalletPayload::new();
 
         for account in &accounts {
@@ -453,19 +453,19 @@ impl WalletContext {
                 label: account.name.clone(),
             });
             if let Some(path) = &account.derivation_path {
-                payload
-                    .derivation_profiles
-                    .push(csv_wallet::format::DerivationProfile {
+                payload.derivation_profiles.push(
+                    csv_sdk::wallet_format::format::DerivationProfile {
                         source_id: account.keystore_ref.clone().unwrap_or_default(),
                         path: path.clone(),
                         name: account.name.clone(),
-                    });
+                    },
+                );
             }
         }
 
         #[cfg(target_arch = "wasm32")]
         {
-            use csv_keys::browser_keystore::BrowserKeystore;
+            use csv_sdk::key_management::browser_keystore::BrowserKeystore;
             let mut vault =
                 BrowserKeystore::new().map_err(|e| format!("Platform vault unavailable: {e}"))?;
             for account in &accounts {
@@ -554,7 +554,7 @@ impl WalletContext {
                 return Err("Wallet file conflicts with an existing account; imports never silently merge identities".to_string());
             }
             imported_accounts.push(ChainAccount::watch_only(
-                csv_hash::ChainId::new(&known.chain),
+                csv_sdk::protocol::hash::ChainId::new(&known.chain),
                 &known.label,
                 &known.address,
             ));
@@ -595,13 +595,13 @@ impl WalletContext {
                 String::from_utf8(mnemonic_secret.to_vec())
                     .map_err(|_| "Wallet file mnemonic is malformed".to_string())?,
             );
-            let mnemonic = csv_keys::bip39::Mnemonic::from_phrase(&phrase)
+            let mnemonic = csv_sdk::key_management::bip39::Mnemonic::from_phrase(&phrase)
                 .map_err(|_| "Wallet file mnemonic is invalid".to_string())?;
             let seed = mnemonic.to_seed(None);
-            let derived = csv_keys::bip44::derive_all_chain_keys(seed.as_bytes(), 0);
+            let derived = csv_sdk::key_management::bip44::derive_all_chain_keys(seed.as_bytes(), 0);
             for account in &payload.accounts {
                 let key = derived
-                    .get(&csv_hash::ChainId::new(&account.chain))
+                    .get(&csv_sdk::protocol::hash::ChainId::new(&account.chain))
                     .ok_or("Wallet file contains an unsupported chain for mnemonic import")?;
                 payload.key_sources.push(KeySource {
                     id: format!("derived:{}", account.chain),
@@ -626,18 +626,18 @@ impl WalletContext {
                 "Wallet file key sources do not unambiguously match its accounts".to_string(),
             );
         }
-        let passphrase = csv_keys::memory::Passphrase::new(vault_passphrase);
+        let passphrase = csv_sdk::key_management::memory::Passphrase::new(vault_passphrase);
         for (source, account) in private_sources.iter_mut().zip(imported_accounts.iter_mut()) {
             if source.secret.len() != 32 {
                 return Err("Wallet file has an invalid private-key source".to_string());
             }
             let mut bytes = [0u8; 32];
             bytes.copy_from_slice(&source.secret);
-            let key = csv_keys::memory::SecretKey::new(bytes);
+            let key = csv_sdk::key_management::memory::SecretKey::new(bytes);
             let key_id = uuid::Uuid::new_v4().to_string();
             #[cfg(target_arch = "wasm32")]
             {
-                use csv_keys::browser_keystore::BrowserKeystore;
+                use csv_sdk::key_management::browser_keystore::BrowserKeystore;
                 BrowserKeystore::new()
                     .map_err(|e| format!("Platform vault unavailable: {e}"))?
                     .store_key(&key_id, account.chain.as_str(), &key, &passphrase)
@@ -794,7 +794,7 @@ impl WalletContext {
         private_key_hex: &str,
         passphrase: &str,
     ) -> Result<(), String> {
-        use csv_keys::memory::{Passphrase, SecretKey};
+        use csv_sdk::key_management::memory::{Passphrase, SecretKey};
 
         // Derive address from private key using the selected network
         let bitcoin_network = match self.state.read().selected_network {
@@ -835,7 +835,7 @@ impl WalletContext {
 
         #[cfg(target_arch = "wasm32")]
         {
-            use csv_keys::browser_keystore::BrowserKeystore;
+            use csv_sdk::key_management::browser_keystore::BrowserKeystore;
             let keystore =
                 BrowserKeystore::new().map_err(|e| format!("Failed to create keystore: {}", e))?;
             keystore
@@ -899,7 +899,10 @@ impl WalletContext {
             .as_mut()
             .ok_or("Native keystore not initialized. Call init_native_keystore() first.")?;
         let secret_key = keystore
-            .retrieve_key(key_id, &csv_keys::memory::Passphrase::new(passphrase))
+            .retrieve_key(
+                key_id,
+                &csv_sdk::key_management::memory::Passphrase::new(passphrase),
+            )
             .map_err(|e| e.to_string())?;
         Ok(hex::encode(secret_key.as_bytes()))
     }
@@ -1100,7 +1103,8 @@ impl WalletContext {
     /// wallet/account metadata.
     pub fn lock(&mut self) {
         #[cfg(target_arch = "wasm32")]
-        if let Ok(mut keystore) = csv_keys::browser_keystore::BrowserKeystore::new() {
+        if let Ok(mut keystore) = csv_sdk::key_management::browser_keystore::BrowserKeystore::new()
+        {
             keystore.end_session();
         }
         #[cfg(not(target_arch = "wasm32"))]
@@ -1120,15 +1124,16 @@ impl WalletContext {
             .into_iter()
             .find_map(|account| account.keystore_ref);
         if let Some(key_id) = key_id {
-            let passphrase = csv_keys::memory::Passphrase::new(passphrase);
+            let passphrase = csv_sdk::key_management::memory::Passphrase::new(passphrase);
             #[cfg(target_arch = "wasm32")]
             {
-                let mut keystore = csv_keys::browser_keystore::BrowserKeystore::new()
-                    .map_err(|error| format!("Platform vault unavailable: {error}"))?;
+                let mut keystore =
+                    csv_sdk::key_management::browser_keystore::BrowserKeystore::new()
+                        .map_err(|error| format!("Platform vault unavailable: {error}"))?;
                 keystore
                     .retrieve_key(&key_id, &passphrase)
                     .map_err(|error| match error {
-                        csv_keys::browser_keystore::BrowserKeystoreError::InvalidPassphrase => {
+                        csv_sdk::key_management::browser_keystore::BrowserKeystoreError::InvalidPassphrase => {
                             "Passphrase does not match this wallet".to_string()
                         }
                         _ => format!("Could not unlock the wallet: {error}"),

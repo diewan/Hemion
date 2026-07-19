@@ -5,13 +5,13 @@ use crate::context::wallet::set_seal_encryption_key;
 #[cfg(target_arch = "wasm32")]
 use crate::core::seal_storage::derive_key_from_passphrase;
 use crate::wallet_core::{ChainAccount, WalletData as Wallet};
-use csv_hash::ChainId;
-use csv_keys::{
+use csv_sdk::key_management::{
     bip39::{Mnemonic, MnemonicType},
     bip44::derive_all_chain_keys,
     browser_keystore::BrowserKeystore,
     memory::Seed,
 };
+use csv_sdk::protocol::hash::ChainId;
 use dioxus::prelude::*;
 
 /// Wallet state.
@@ -69,7 +69,7 @@ impl WalletContext {
             // Store the encrypted key in browser keystore
             let keystore_ref = format!("{}_account_0", chain.to_string().to_lowercase());
 
-            use csv_keys::memory::Passphrase;
+            use csv_sdk::key_management::memory::Passphrase;
             let passphrase = Passphrase::new(password);
 
             keystore
@@ -136,7 +136,7 @@ impl WalletContext {
             return Err("No keys found in keystore".to_string());
         }
 
-        use csv_keys::memory::Passphrase;
+        use csv_sdk::key_management::memory::Passphrase;
         let passphrase = Passphrase::new(password);
 
         // Restore accounts from keystore
@@ -203,7 +203,7 @@ impl WalletContext {
         }
 
         // Try to decrypt the first key to verify password
-        use csv_keys::memory::Passphrase;
+        use csv_sdk::key_management::memory::Passphrase;
         let passphrase = Passphrase::new(password);
 
         let first_key = &key_ids[0];

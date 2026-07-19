@@ -1,6 +1,6 @@
 //! Aptos chain integration.
 
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 
 /// Format Aptos address.
 pub fn format_address(hash_bytes: &[u8]) -> String {

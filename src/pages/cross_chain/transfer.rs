@@ -5,7 +5,7 @@ use crate::context::{SanadStatus, TransferLifecycleView, use_wallet_context};
 use crate::pages::common::*;
 use crate::routes::Route;
 use crate::services::transfer_authority::{TransferRequest, TransferSubmission, submit_transfer};
-use csv_hash::{ChainId, SanadId};
+use csv_sdk::protocol::hash::{ChainId, SanadId};
 use dioxus::prelude::*;
 use std::rc::Rc;
 

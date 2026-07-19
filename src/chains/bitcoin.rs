@@ -4,7 +4,7 @@
 
 use bitcoin::key::TweakedPublicKey;
 use bitcoin::{Address, Network, XOnlyPublicKey};
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 
 /// Get Bitcoin address format using proper Taproot (P2TR) encoding.
 pub fn format_address(pubkey_bytes: &[u8], network: Network) -> String {

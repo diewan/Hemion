@@ -1,6 +1,6 @@
 //! Network configuration service.
 
-use csv_hash::ChainId;
+use csv_sdk::protocol::hash::ChainId;
 
 /// Network type (testnet or mainnet).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

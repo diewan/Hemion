@@ -1,9 +1,9 @@
 //! Platform-specific persistence for the wallet UI.
 
 #[cfg(target_arch = "wasm32")]
-pub use csv_store::browser_storage::BrowserStorageError as StorageError;
+pub use csv_sdk::consumer_storage::browser_storage::BrowserStorageError as StorageError;
 #[cfg(target_arch = "wasm32")]
-pub use csv_store::browser_storage::*;
+pub use csv_sdk::consumer_storage::browser_storage::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod native {

@@ -2,6 +2,7 @@
 name = "hemion"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.95"
 description = "Standalone multi-chain wallet for Parwana with Dioxus UI"
 license = "MIT OR Apache-2.0"
 authors = ["Amin Razavi"]
@@ -15,20 +16,10 @@ name = "hemion"
 path = "src/main.rs"
 
 [dependencies]
-# Core Parwana  types (resolved against ../parwana)
-csv-verifier = { path = "../parwana/csv-verifier" }
-csv-store = { path = "../parwana/csv-store", default-features = false, features = ["browser-storage", "encrypted-storage"] }
-csv-keys = { path = "../parwana/csv-keys", features = ["wasm", "production"] }
-# Canonical identity and protocol-version authorities. The wallet imports these
-# directly rather than rebuilding a compatibility facade over the retired core.
-csv-hash = { path = "../parwana/csv-hash", features = ["serde"] }
-csv-protocol = { path = "../parwana/csv-protocol" }
-# The wallet exchanges only versioned application-contract artifacts.  Wire and
-# canonical codec are explicit dependencies so this boundary is auditable.
-csv-wire = { path = "../parwana/csv-wire" }
-csv-codec = { path = "../parwana/csv-codec" }
-# The portable, encrypted wallet envelope shared with csv-cli.  The package is
-csv-wallet = { package = "csv-wallet", path = "../parwana/csv-wallet", features = ["wasm"] }
+# Parwana's supported consumer facade. The exact version is paired with the
+# commit and corpus pin in `.diewan/parwana-contract.toml`; the sibling path is
+# solely the umbrella-workspace checkout layout used by local and CI builds.
+csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "tokio"] }
 
 # Dioxus UI
 dioxus = { version = "0.7", features = ["web", "router"] }
@@ -86,8 +77,6 @@ base64 = "0.21"
 
 # Native-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-csv-runtime = { path = "../parwana/csv-runtime", optional = true }
-csv-sdk = { path = "../parwana/csv-sdk", features = ["bitcoin", "tokio", "wallet", "runtime-coordinator"] }
 tokio = { version = "1.0", features = ["macros", "rt", "sync", "time"] }
 tokio-tungstenite = { version = "0.20", optional = true }
 reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
@@ -96,7 +85,6 @@ rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "a
 
 # WASM-only dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-csv-sdk = { path = "../parwana/csv-sdk", default-features = false, features = ["wasm"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
@@ -104,14 +92,10 @@ serial_test = "3.0"
 # APPS-CONFORMANCE-015: cross-application fixtures exercise the same public
 # contracts that the CLI consumes.  These remain test-only; they do not give
 # the presentation layer protocol authority.
-tuppira-shared = { path = "../tuppira/shared" }
-csv-testkit = { path = "../parwana/csv-testkit" }
 
 [features]
 default = ["native"]
-native = ["dep:csv-runtime", "dep:reqwest", "dep:tokio-tungstenite"]
-csv-bitcoin = ["csv-sdk/bitcoin"]
-csv-ethereum = ["csv-sdk/ethereum"]
+native = ["dep:reqwest", "dep:tokio-tungstenite"]
 
 # Hemion is checked out independently from the umbrella application workspace.
 # Declaring its own workspace prevents Cargo from inheriting the parent
@@ -123,6 +107,3 @@ resolver = "2"
 getrandom = { version = "0.2", features = ["js"] }
 web-sys = { version = "0.3", features = ["Window", "console"] }
 gloo-timers = { version = "0.3", features = ["futures"] }
-
-[patch.crates-io]
-spl-token-2022-interface = { path = "../parwana/third_party/spl-token-2022-interface" }
