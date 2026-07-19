@@ -14,3 +14,4 @@ pub mod platform;
 pub mod rpc_settings;
 pub mod subscription;
 pub mod transfer_authority;
+pub mod tuppira;

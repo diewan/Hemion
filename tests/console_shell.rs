@@ -166,3 +166,20 @@ fn product_metadata_and_local_authority_boundary_are_explicit() {
     assert!(home.contains("Recorded elsewhere is not locally verified."));
     assert!(!home.contains("verified ✓"));
 }
+
+#[test]
+fn tuppira_explorer_keeps_discovery_and_local_verification_distinct() {
+    let page = read("src/pages/tuppira_explorer.rs");
+    for required in [
+        "Observation discovery and lineage",
+        "Source health",
+        "Discover and trace",
+        "Recorded elsewhere · not locally verified",
+        "Verify selected evidence locally",
+        "Absence does not establish non-occurrence",
+    ] {
+        assert!(page.contains(required), "missing G-08 behavior: {required}");
+    }
+    assert!(page.contains("verify_selected"));
+    assert!(!page.contains("Tuppira verified"));
+}

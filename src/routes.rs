@@ -18,6 +18,8 @@ pub enum Route {
     ObjectInspector {},
     #[route("/disputes")]
     DisputeInspector {},
+    #[route("/explorer/tuppira")]
+    TuppiraExplorer {},
     #[route("/environments/:environment_id/receipts/:receipt_id")]
     PitekaEnvironmentReceipt {
         environment_id: String,

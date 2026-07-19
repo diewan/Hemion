@@ -14,7 +14,7 @@ struct Destination {
     route: Route,
 }
 
-fn console_destinations() -> [Destination; 5] {
+fn console_destinations() -> [Destination; 6] {
     [
         Destination {
             label: "Console home",
@@ -40,6 +40,11 @@ fn console_destinations() -> [Destination; 5] {
             label: "Dispute inspector",
             icon: "⋈",
             route: Route::DisputeInspector {},
+        },
+        Destination {
+            label: "Tuppira explorer",
+            icon: "⌘",
+            route: Route::TuppiraExplorer {},
         },
     ]
 }
@@ -129,6 +134,7 @@ mod tests {
         assert_eq!(console_destinations()[2].label, "Assurance inspector");
         assert_eq!(console_destinations()[3].label, "Object inspector");
         assert_eq!(console_destinations()[4].label, "Dispute inspector");
+        assert_eq!(console_destinations()[5].label, "Tuppira explorer");
         assert_eq!(wallet_destinations()[0].label, "Legacy wallet");
         assert_eq!(wallet_destinations().len(), 5);
     }
