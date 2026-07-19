@@ -14,12 +14,19 @@ struct Destination {
     route: Route,
 }
 
-fn console_destinations() -> [Destination; 1] {
-    [Destination {
-        label: "Console home",
-        icon: "⌁",
-        route: Route::ConsoleHome {},
-    }]
+fn console_destinations() -> [Destination; 2] {
+    [
+        Destination {
+            label: "Console home",
+            icon: "⌁",
+            route: Route::ConsoleHome {},
+        },
+        Destination {
+            label: "Bundle verifier",
+            icon: "✓",
+            route: Route::BundleVerify {},
+        },
+    ]
 }
 
 fn wallet_destinations() -> [Destination; 5] {
@@ -90,6 +97,7 @@ pub fn Sidebar(sidebar_open: bool) -> Element {
         }
         nav { class: "instrument-tabs", aria_label: "Primary navigation",
             {navigation_link(console_destinations()[0].clone(), true)}
+            {navigation_link(console_destinations()[1].clone(), true)}
             {navigation_link(wallet_destinations()[0].clone(), true)}
         }
     }
@@ -102,6 +110,7 @@ mod tests {
     #[test]
     fn navigation_exposes_only_working_console_screen_and_legacy_wallet() {
         assert_eq!(console_destinations()[0].label, "Console home");
+        assert_eq!(console_destinations()[1].label, "Bundle verifier");
         assert_eq!(wallet_destinations()[0].label, "Legacy wallet");
         assert_eq!(wallet_destinations().len(), 5);
     }

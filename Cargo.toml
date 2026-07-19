@@ -72,7 +72,7 @@ base64 = "0.21"
 
 # Native-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "bitcoin", "tokio", "runtime-coordinator"] }
+csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "bitcoin", "tokio", "runtime-coordinator", "accountability"] }
 tokio = { version = "1.0", features = ["macros", "rt", "sync", "time"] }
 tokio-tungstenite = { version = "0.20", optional = true }
 reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
@@ -81,7 +81,7 @@ rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "a
 
 # WASM-only dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "wasm"] }
+csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "wasm", "accountability"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

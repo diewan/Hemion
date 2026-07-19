@@ -3,6 +3,7 @@
 pub mod application_contract;
 pub mod asset_service;
 pub mod blockchain;
+pub mod bundle_verifier;
 pub mod chain_api;
 pub mod explorer;
 pub mod http;

@@ -62,9 +62,10 @@ fn console_is_primary_and_legacy_wallet_remains_routable() {
 }
 
 #[test]
-fn unfinished_console_screens_are_not_false_navigation() {
+fn bundle_verifier_is_exposed_but_later_inspectors_are_not() {
     let navigation = read("src/components/sidebar.rs");
-    for absent in ["Bundle import", "Assurance inspector", "Object inspector"] {
+    assert!(navigation.contains("label: \"Bundle verifier\""));
+    for absent in ["Assurance inspector", "Object inspector"] {
         assert!(
             !navigation.contains(&format!("label: \"{absent}")),
             "unfinished destination exposed: {absent}"

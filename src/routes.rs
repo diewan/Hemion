@@ -10,6 +10,8 @@ pub enum Route {
     // S-H1 — local developer-console entry.
     #[route("/")]
     ConsoleHome {},
+    #[route("/verify")]
+    BundleVerify {},
 
     // Legacy wallet entry. Existing wallet routes remain available unchanged.
     #[route("/wallet")]

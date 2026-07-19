@@ -106,6 +106,9 @@ const GLOBAL_CSS: &str = r#"
 .console-action { display: inline-flex; min-height: 2.75rem; align-items: center; margin-top: .5rem; padding: .5rem .75rem; border: 1px solid var(--interactive); border-radius: .375rem; color: var(--interactive); }
 .console-notice { margin-top: .75rem; border-style: dashed; color: var(--ink-2); }
 .console-notice strong { color: var(--ink-1); }
+.bundle-verify textarea { width: 100%; resize: vertical; border: 1px solid var(--rule); background: var(--surface-0); color: var(--ink-1); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.bundle-verify textarea:focus-visible, .bundle-verify button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.bundle-verify button:disabled { color: var(--ink-3); border-color: var(--rule); cursor: not-allowed; }
 /* Page Transitions */
 .page-enter {
     animation: pageFadeIn 0.3s ease-out;

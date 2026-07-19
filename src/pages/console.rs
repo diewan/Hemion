@@ -39,7 +39,7 @@ pub fn ConsoleHome() -> Element {
 
             aside { class: "console-notice", aria_label: "Authority limitation",
                 strong { "Recorded elsewhere is not locally verified." }
-                span { " Bundle import and assurance inspection will appear only when Hemion can compute their results locally." }
+                        span { " Bundle results become local only after Hemion computes them with an explicitly selected context." }
             }
         }
     }

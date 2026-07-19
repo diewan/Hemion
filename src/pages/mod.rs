@@ -15,6 +15,7 @@
 //! intentionally not redirected.
 
 // Common UI helpers (fully migrated)
+pub mod bundle_verify;
 pub mod common;
 pub mod console;
 
@@ -35,6 +36,7 @@ pub mod validate;
 pub mod zk_proofs;
 
 // Re-exports from nft_page and wallet_page (standalone files)
+pub use bundle_verify::BundleVerify;
 pub use console::ConsoleHome;
 pub use nft_page::{NftCollections, NftDetail, NftGallery};
 pub use wallet_page::WalletPage;
