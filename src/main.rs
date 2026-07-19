@@ -123,6 +123,13 @@ const GLOBAL_CSS: &str = r#"
 .bundle-verify textarea { width: 100%; resize: vertical; border: 1px solid var(--rule); background: var(--surface-0); color: var(--ink-1); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 .bundle-verify textarea:focus-visible, .bundle-verify button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .bundle-verify button:disabled { color: var(--ink-3); border-color: var(--rule); cursor: not-allowed; }
+.fixture-layout { display: grid; grid-template-columns: minmax(15rem, .4fr) minmax(0, 1fr); gap: .75rem; margin-top: 1rem; }
+.fixture-list { display: flex; flex-direction: column; gap: .25rem; }
+.fixture-list .console-action { width: 100%; margin: 0; flex-direction: column; align-items: flex-start; }
+.fixture-list .console-action small { color: var(--ink-2); }
+.fixture-list [aria-pressed="true"] { color: var(--surface-0); background: var(--interactive); }
+.fixture-list [aria-pressed="true"] small { color: var(--surface-0); }
+.replay-demo { margin-top: 1rem; }
 .assurance-inspector textarea { width: 100%; resize: vertical; border: 1px solid var(--rule); background: var(--surface-0); color: var(--ink-1); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 .assurance-inspector textarea:focus-visible, .assurance-table:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .assurance-context { margin-top: 1rem; }
@@ -180,6 +187,7 @@ const GLOBAL_CSS: &str = r#"
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
 @media (max-width: 767px) {
+    .fixture-layout { grid-template-columns: 1fr; }
     .inspector-columns { grid-template-columns: 1fr; }
     .inspector-timeline li { grid-template-columns: 1fr; }
     .app-sidebar { display: none; }

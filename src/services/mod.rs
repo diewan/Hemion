@@ -6,6 +6,7 @@ pub mod blockchain;
 pub mod bundle_verifier;
 pub mod chain_api;
 pub mod explorer;
+pub mod fixture_lab;
 pub mod http;
 pub mod network;
 pub mod observation;

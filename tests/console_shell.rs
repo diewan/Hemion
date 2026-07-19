@@ -183,3 +183,32 @@ fn tuppira_explorer_keeps_discovery_and_local_verification_distinct() {
     assert!(page.contains("verify_selected"));
     assert!(!page.contains("Tuppira verified"));
 }
+
+#[test]
+fn fixture_lab_is_browsable_accessible_and_computes_actual_results_locally() {
+    let page = read("src/pages/fixture_lab.rs");
+    for required in [
+        "Expected",
+        "Actual",
+        "aria_pressed",
+        "aria_live",
+        "Run selected vector locally",
+        "First attempt — accepted once.",
+        "Second attempt — rejected.",
+        "ReplayDetected",
+        "no provider dispatch was performed",
+        "Missing evidence never establishes non-occurrence",
+    ] {
+        assert!(
+            page.contains(required),
+            "missing fixture-lab requirement: {required}"
+        );
+    }
+    assert!(page.contains("run_case"));
+    assert!(page.contains("import_context"));
+    for prohibited in ["simulated success", "mark consumed", "dispatch_provider"] {
+        assert!(!page.contains(prohibited));
+    }
+    let navigation = read("src/components/sidebar.rs");
+    assert!(navigation.contains("label: \"Fixture lab\""));
+}

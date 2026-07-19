@@ -18,6 +18,8 @@ pub enum Route {
     ObjectInspector {},
     #[route("/disputes")]
     DisputeInspector {},
+    #[route("/fixtures")]
+    FixtureLab {},
     #[route("/explorer/tuppira")]
     TuppiraExplorer {},
     #[route("/environments/:environment_id/receipts/:receipt_id")]
