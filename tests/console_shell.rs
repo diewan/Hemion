@@ -72,21 +72,46 @@ fn console_is_primary_and_legacy_wallet_remains_routable() {
 }
 
 #[test]
-fn bundle_verifier_and_object_inspector_are_exposed_but_later_assurance_is_not() {
+fn implemented_console_inspectors_are_exposed() {
     let navigation = read("src/components/sidebar.rs");
     assert!(navigation.contains("label: \"Bundle verifier\""));
     assert!(navigation.contains("label: \"Object inspector\""));
     assert!(navigation.contains("label: \"Dispute inspector\""));
-    for absent in ["Assurance inspector"] {
-        assert!(
-            !navigation.contains(&format!("label: \"{absent}")),
-            "unfinished destination exposed: {absent}"
-        );
-    }
+    assert!(navigation.contains("label: \"Assurance inspector\""));
     assert!(navigation.contains("aria_label: destination.label"));
     let css = read("src/main.rs");
     assert!(css.contains(":focus-visible { outline: 2px"));
     assert!(css.contains("prefers-reduced-motion: reduce"));
+}
+
+#[test]
+fn assurance_inspector_shows_all_dimensions_context_reasons_and_limitations() {
+    let page = read("src/pages/assurance_inspector.rs");
+    for required in [
+        "All 11 checks under the selected context",
+        "Context digest",
+        "Verifier policy digest",
+        "Trust package digest",
+        "Reason codes and meaning",
+        "Limitations",
+        "Cannot be determined",
+        "Not applicable",
+        "External source support",
+        "tabindex: \"0\"",
+    ] {
+        assert!(
+            page.contains(required),
+            "missing assurance requirement: {required}"
+        );
+    }
+    for prohibited in ["independent confirmation", "verified ✓", "risk score"] {
+        assert!(
+            !page.contains(prohibited),
+            "misleading assurance language: {prohibited}"
+        );
+    }
+    assert!(page.contains("no single trust score is produced"));
+    assert!(page.contains("import_and_verify"));
 }
 
 #[test]

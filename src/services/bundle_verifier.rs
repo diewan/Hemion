@@ -1,13 +1,13 @@
 //! Offline Accountability bundle verification through the pinned Parwana SDK.
 
 use csv_sdk::accountability::{
-    ActionIntent, ActionMandate, ContextBoundOutput, EvidenceKind, EvidenceNode, EvidenceNodeId,
-    ExecutionAttempt, ExecutionReceipt, VerificationContext, VerificationContextId,
+    ActionIntent, ActionMandate, AssuranceProfile, ContextBoundOutput, EvidenceKind, EvidenceNode,
+    EvidenceNodeId, ExecutionAttempt, ExecutionReceipt, VerificationContext, VerificationContextId,
 };
 use csv_sdk::accountability_verification::{
     AlgorithmStatus, AuthenticityStatus, ImportError, ReplayStatus, RevocationStatus,
-    VerificationDisposition, VerificationInput, VerificationReport, decode_local_context,
-    decode_local_verification_bundle, verify,
+    VerificationDisposition, VerificationInput, VerificationReport, assurance_profile,
+    decode_local_context, decode_local_verification_bundle, verify,
 };
 
 /// Maximum local import size. The limit is applied before decoding.
@@ -147,10 +147,13 @@ pub enum LocalVerificationError {
 }
 
 /// Result Hemion may render as locally computed.
+#[derive(Clone)]
 pub struct LocalVerificationResult {
     pub context_name: String,
     pub context_id: VerificationContextId,
+    pub context: VerificationContext,
     pub report: VerificationReport,
+    pub assurance: AssuranceProfile,
 }
 
 /// Select an explicit context and invoke the side-effect-free Parwana verifier.
@@ -191,10 +194,13 @@ pub fn verify_locally(
     )
     .map_err(|_| LocalVerificationError::ContextInvalid)?;
 
+    let assurance = assurance_profile(verification_context_id, &result);
     Ok(LocalVerificationResult {
         context_name: choice.name.clone(),
         context_id: verification_context_id,
+        context: choice.context.clone(),
         report: result,
+        assurance,
     })
 }
 

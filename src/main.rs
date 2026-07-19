@@ -122,6 +122,17 @@ const GLOBAL_CSS: &str = r#"
 .bundle-verify textarea { width: 100%; resize: vertical; border: 1px solid var(--rule); background: var(--surface-0); color: var(--ink-1); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 .bundle-verify textarea:focus-visible, .bundle-verify button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .bundle-verify button:disabled { color: var(--ink-3); border-color: var(--rule); cursor: not-allowed; }
+.assurance-inspector textarea { width: 100%; resize: vertical; border: 1px solid var(--rule); background: var(--surface-0); color: var(--ink-1); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.assurance-inspector textarea:focus-visible, .assurance-table:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.assurance-context { margin-top: 1rem; }
+.assurance-context dd { overflow-wrap: anywhere; text-align: right; }
+.assurance-table { width: 100%; margin-top: .75rem; border-collapse: collapse; background: var(--surface-1); }
+.assurance-table caption { padding: .75rem 0; text-align: left; font-weight: 600; }
+.assurance-table th, .assurance-table td { padding: .75rem; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+.assurance-table th code { display: block; margin-top: .25rem; color: var(--ink-3); font-weight: 400; }
+.assurance-table p { margin-top: 0; }
+.assurance-status { white-space: nowrap; }
+.reason-code { display: block; margin: .25rem 0; color: var(--interactive); overflow-wrap: anywhere; }
 .dispute-alerts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .75rem; margin-top: 1rem; }
 .dispute-alert { border: 2px solid var(--rule); background: var(--surface-1); padding: .75rem; }
 .dispute-alert h2 { margin: 0; font-size: 1rem; } .dispute-alert strong { display: block; font-size: 1.5rem; }

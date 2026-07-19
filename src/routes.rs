@@ -12,6 +12,8 @@ pub enum Route {
     ConsoleHome {},
     #[route("/verify")]
     BundleVerify {},
+    #[route("/assurance")]
+    AssuranceInspector {},
     #[route("/inspect")]
     ObjectInspector {},
     #[route("/disputes")]

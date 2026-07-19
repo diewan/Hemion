@@ -15,6 +15,7 @@
 //! intentionally not redirected.
 
 // Common UI helpers (fully migrated)
+pub mod assurance_inspector;
 pub mod bundle_verify;
 pub mod common;
 pub mod console;
@@ -38,6 +39,7 @@ pub mod validate;
 pub mod zk_proofs;
 
 // Re-exports from nft_page and wallet_page (standalone files)
+pub use assurance_inspector::AssuranceInspector;
 pub use bundle_verify::BundleVerify;
 pub use console::ConsoleHome;
 pub use dispute_inspector::DisputeInspector;
