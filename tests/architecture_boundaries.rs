@@ -170,24 +170,52 @@ fn sdk_dependency_and_contract_are_exactly_pinned() {
 }
 
 #[test]
-fn feature_sets_exclude_concrete_and_authority_capabilities() {
+fn feature_sets_keep_native_application_mode_out_of_wasm() {
     let manifest = fs::read_to_string(manifest_path()).expect("wallet manifest must be readable");
-    for forbidden in [
-        "runtime-coordinator",
-        "all-chains",
-        "csv-sdk/bitcoin",
-        "csv-sdk/ethereum",
-        "csv-sdk/solana",
-        "csv-sdk/sui",
-        "csv-sdk/aptos",
-        "csv-sdk/p2p",
-        "csv-sdk/sqlite",
-    ] {
+    for forbidden in ["all-chains", "csv-sdk/p2p", "csv-sdk/sqlite"] {
         assert!(
             !manifest.contains(forbidden),
             "forbidden SDK capability `{forbidden}`"
         );
     }
+
+    let wasm = manifest
+        .split("[target.'cfg(target_arch = \"wasm32\")'.dependencies]")
+        .nth(1)
+        .expect("WASM dependency section must exist")
+        .split("[dev-dependencies]")
+        .next()
+        .expect("WASM dependency section must terminate");
+    for forbidden in [
+        "runtime-coordinator",
+        "bitcoin",
+        "ethereum",
+        "solana",
+        "sui",
+        "aptos",
+    ] {
+        assert!(
+            !wasm.contains(forbidden),
+            "WASM must exclude native capability `{forbidden}`"
+        );
+    }
+
+    assert!(
+        manifest.contains("runtime-coordinator"),
+        "native application mode must preserve SDK transfer delegation"
+    );
+}
+
+#[test]
+fn native_transfer_actions_delegate_to_sdk_coordinator() {
+    let source = fs::read_to_string(source_root().join("services/transfer_authority.rs"))
+        .expect("transfer authority boundary must be readable");
+    assert!(source.contains("pub async fn submit_transfer(request: TransferRequest)"));
+    assert!(source.contains("pub async fn resume_transfer(request: ResumeRequest)"));
+    assert_eq!(source.matches(".with_runtime_coordinator()").count(), 2);
+    assert!(source.contains(".execute_outcome()"));
+    assert!(source.contains(".resume("));
+    assert!(!source.contains("transfer mutation requires a configured SDK application host"));
 }
 
 #[test]

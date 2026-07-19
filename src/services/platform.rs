@@ -472,8 +472,8 @@ pub struct RuntimeResponse {
 }
 
 /// Read-only runtime port. Transfer mutation remains at the separate
-/// `transfer_authority` boundary and is unavailable without an SDK application
-/// host; this port cannot mutate protocol lifecycle state.
+/// `transfer_authority` boundary, which delegates lifecycle authority through
+/// the SDK coordinator; this port cannot mutate protocol lifecycle state.
 #[async_trait(?Send)]
 pub trait RuntimePort {
     async fn command(&self, command: RuntimeCommand) -> Result<RuntimeEvent, PlatformError>;

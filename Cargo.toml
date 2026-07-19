@@ -16,11 +16,6 @@ name = "hemion"
 path = "src/main.rs"
 
 [dependencies]
-# Parwana's supported consumer facade. The exact version is paired with the
-# commit and corpus pin in `.diewan/parwana-contract.toml`; the sibling path is
-# solely the umbrella-workspace checkout layout used by local and CI builds.
-csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "tokio"] }
-
 # Dioxus UI
 dioxus = { version = "0.7", features = ["web", "router"] }
 
@@ -77,6 +72,7 @@ base64 = "0.21"
 
 # Native-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "bitcoin", "tokio", "runtime-coordinator"] }
 tokio = { version = "1.0", features = ["macros", "rt", "sync", "time"] }
 tokio-tungstenite = { version = "0.20", optional = true }
 reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
@@ -85,6 +81,7 @@ rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "a
 
 # WASM-only dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "wasm"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
