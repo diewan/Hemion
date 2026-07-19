@@ -108,6 +108,7 @@ const GLOBAL_CSS: &str = r#"
 .console-notice strong { color: var(--ink-1); }
 .inspector-import { display: block; margin-top: 1rem; }
 .inspector-import textarea { width: 100%; box-sizing: border-box; background: var(--surface-0); color: var(--ink-1); border: 1px solid var(--rule); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.inspector-import input { width: 100%; box-sizing: border-box; background: var(--surface-0); color: var(--ink-1); border: 1px solid var(--rule); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 .inspector-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; margin-top: 1rem; }
 .inspector-field { margin: 0; }
 .inspector-field div { display: grid !important; grid-template-columns: minmax(9rem, .35fr) minmax(0, 1fr); }

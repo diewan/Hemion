@@ -9,6 +9,7 @@ pub mod explorer;
 pub mod http;
 pub mod network;
 pub mod observation;
+pub mod piteka;
 pub mod platform;
 pub mod rpc_settings;
 pub mod subscription;

@@ -21,6 +21,7 @@ pub mod common;
 pub mod console;
 pub mod dispute_inspector;
 pub mod object_inspector;
+pub mod piteka_environment;
 
 // NFT and Wallet pages (already separate files)
 pub mod nft_page;
@@ -45,6 +46,7 @@ pub use console::ConsoleHome;
 pub use dispute_inspector::DisputeInspector;
 pub use nft_page::{NftCollections, NftDetail, NftGallery};
 pub use object_inspector::ObjectInspector;
+pub use piteka_environment::PitekaEnvironmentReceipt;
 pub use wallet_page::WalletPage;
 
 // Re-exports from accounts module

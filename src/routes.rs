@@ -18,6 +18,11 @@ pub enum Route {
     ObjectInspector {},
     #[route("/disputes")]
     DisputeInspector {},
+    #[route("/environments/:environment_id/receipts/:receipt_id")]
+    PitekaEnvironmentReceipt {
+        environment_id: String,
+        receipt_id: String,
+    },
 
     // Legacy wallet entry. Existing wallet routes remain available unchanged.
     #[route("/wallet")]
