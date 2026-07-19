@@ -122,6 +122,21 @@ const GLOBAL_CSS: &str = r#"
 .bundle-verify textarea { width: 100%; resize: vertical; border: 1px solid var(--rule); background: var(--surface-0); color: var(--ink-1); padding: .75rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 .bundle-verify textarea:focus-visible, .bundle-verify button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .bundle-verify button:disabled { color: var(--ink-3); border-color: var(--rule); cursor: not-allowed; }
+.dispute-alerts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .75rem; margin-top: 1rem; }
+.dispute-alert { border: 2px solid var(--rule); background: var(--surface-1); padding: .75rem; }
+.dispute-alert h2 { margin: 0; font-size: 1rem; } .dispute-alert strong { display: block; font-size: 1.5rem; }
+.dispute-gap { border-color: #d6a85f; } .dispute-withheld { border-color: #a9b1bc; border-style: dashed; } .dispute-conflict { border-color: #ef8f9c; }
+.dispute-controls { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
+.dispute-controls fieldset { border: 0; margin: 0; padding: 0; } .dispute-controls .console-action { margin-right: .375rem; }
+.dispute-controls [aria-pressed="true"] { color: var(--surface-0); background: var(--interactive); }
+.evidence-graph { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .75rem; }
+.evidence-node { border: 1px solid var(--interactive); background: var(--surface-1); padding: .75rem; overflow-wrap: anywhere; }
+.evidence-node-gap { border: 2px solid #d6a85f; } .evidence-node-withheld { border-style: dashed; }
+.evidence-node:focus-visible, .dispute-controls button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.edge-list { margin-top: .75rem; } .edge-list code, .dispute-table code { overflow-wrap: anywhere; }
+.dispute-table { width: 100%; border-collapse: collapse; } .dispute-table caption { text-align: left; font-weight: 600; padding: .5rem 0; }
+.dispute-table th, .dispute-table td { padding: .625rem; text-align: left; vertical-align: top; border: 1px solid var(--rule); }
+.dispute-conflict-list { border-left: 4px solid #ef8f9c; padding: .75rem 1.75rem; background: var(--surface-1); }
 /* Page Transitions */
 .page-enter {
     animation: pageFadeIn 0.3s ease-out;

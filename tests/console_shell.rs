@@ -49,6 +49,16 @@ fn wcag_aa_console_text_matrix_passes() {
             contrast(foreground, background)
         );
     }
+    for (name, foreground, background) in [
+        ("gap-border/surface-1", "#d6a85f", "#1c2027"),
+        ("conflict-border/surface-1", "#ef8f9c", "#1c2027"),
+    ] {
+        assert!(
+            contrast(foreground, background) >= 3.0,
+            "{name} is only {:.2}:1",
+            contrast(foreground, background)
+        );
+    }
 }
 
 #[test]
@@ -66,6 +76,7 @@ fn bundle_verifier_and_object_inspector_are_exposed_but_later_assurance_is_not()
     let navigation = read("src/components/sidebar.rs");
     assert!(navigation.contains("label: \"Bundle verifier\""));
     assert!(navigation.contains("label: \"Object inspector\""));
+    assert!(navigation.contains("label: \"Dispute inspector\""));
     for absent in ["Assurance inspector"] {
         assert!(
             !navigation.contains(&format!("label: \"{absent}")),
@@ -76,6 +87,33 @@ fn bundle_verifier_and_object_inspector_are_exposed_but_later_assurance_is_not()
     let css = read("src/main.rs");
     assert!(css.contains(":focus-visible { outline: 2px"));
     assert!(css.contains("prefers-reduced-motion: reduce"));
+}
+
+#[test]
+fn dispute_inspector_has_filters_prominent_uncertainty_and_table_alternative() {
+    let page = read("src/pages/dispute_inspector.rs");
+    for required in [
+        "Filter node types",
+        "Evidence gaps",
+        "Withheld branches",
+        "Potential contradictions",
+        "Show accessible table view",
+        "aria_pressed",
+        "scope: \"col\"",
+    ] {
+        assert!(
+            page.contains(required),
+            "missing dispute UI requirement: {required}"
+        );
+    }
+    assert!(page.contains("Triage only"));
+    assert!(page.contains("never establishes non-occurrence"));
+    for prohibited in ["Authorized", "confirmed true", "No evidence means"] {
+        assert!(
+            !page.contains(prohibited),
+            "misleading dispute language: {prohibited}"
+        );
+    }
 }
 
 #[test]

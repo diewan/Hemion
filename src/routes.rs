@@ -14,6 +14,8 @@ pub enum Route {
     BundleVerify {},
     #[route("/inspect")]
     ObjectInspector {},
+    #[route("/disputes")]
+    DisputeInspector {},
 
     // Legacy wallet entry. Existing wallet routes remain available unchanged.
     #[route("/wallet")]

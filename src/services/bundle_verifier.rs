@@ -1,7 +1,7 @@
 //! Offline Accountability bundle verification through the pinned Parwana SDK.
 
 use csv_sdk::accountability::{
-    ActionIntent, ActionMandate, ContextBoundOutput, EvidenceNode, EvidenceNodeId,
+    ActionIntent, ActionMandate, ContextBoundOutput, EvidenceKind, EvidenceNode, EvidenceNodeId,
     ExecutionAttempt, ExecutionReceipt, VerificationContext, VerificationContextId,
 };
 use csv_sdk::accountability_verification::{
@@ -82,6 +82,46 @@ pub struct TimelineEntry {
     pub label: &'static str,
     pub protocol_state: String,
     pub evidence: String,
+}
+
+/// Read-only graph projection for the dispute inspector.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EvidenceGraphInspection {
+    pub nodes: Vec<EvidenceGraphNode>,
+    pub edges: Vec<EvidenceGraphEdge>,
+    pub gap_count: usize,
+    pub withheld_count: usize,
+    pub potential_contradictions: Vec<PotentialContradiction>,
+}
+
+/// One SDK-decoded evidence node. `kind_id` remains the protocol registry id.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EvidenceGraphNode {
+    pub id: String,
+    pub short_id: String,
+    pub kind_id: String,
+    pub kind_label: &'static str,
+    pub producer: String,
+    pub collected_at: u64,
+    pub content_digest: String,
+    pub source: String,
+    pub classification: String,
+    pub is_gap: bool,
+    pub is_withheld: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EvidenceGraphEdge {
+    pub from: String,
+    pub to: String,
+}
+
+/// A display-only conflict signal. It is never a verifier conclusion.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PotentialContradiction {
+    pub left: String,
+    pub right: String,
+    pub explanation: &'static str,
 }
 
 /// Contexts explicitly available to the operator for this verification run.
@@ -325,6 +365,91 @@ pub fn inspect_bundle(bytes: &[u8]) -> Result<ObjectInspection, LocalVerificatio
     })
 }
 
+/// Decode a bundle through the SDK and derive graph layout/filter data without
+/// assigning new protocol meaning. Conflicts are deliberately labelled as
+/// potential contradictions and require human review.
+pub fn inspect_evidence_graph(
+    bytes: &[u8],
+) -> Result<EvidenceGraphInspection, LocalVerificationError> {
+    let decoded = decode_local_verification_bundle(bytes).map_err(map_import_error)?;
+    Ok(project_evidence_graph(&decoded.evidence))
+}
+
+fn project_evidence_graph(evidence: &[(EvidenceNodeId, EvidenceNode)]) -> EvidenceGraphInspection {
+    let mut nodes = Vec::with_capacity(evidence.len());
+    let mut edges = Vec::new();
+    for (id, node) in evidence {
+        let id = hex::encode(id.as_bytes());
+        let (kind_label, is_gap) = match &node.kind {
+            EvidenceKind::Claim { .. } => ("Claim", false),
+            EvidenceKind::Observation { .. } => ("Observation", false),
+            EvidenceKind::Attestation { .. } => ("Attestation", false),
+            EvidenceKind::EvidenceGap { .. } => ("Evidence gap", true),
+        };
+        let is_withheld = matches!(
+            node.source_locator,
+            csv_sdk::accountability::SourceLocator::Withheld(_)
+        );
+        for relationship in &node.relationships {
+            edges.push(EvidenceGraphEdge {
+                from: id.clone(),
+                to: hex::encode(relationship.as_bytes()),
+            });
+        }
+        nodes.push(EvidenceGraphNode {
+            short_id: id.chars().take(12).collect(),
+            id,
+            kind_id: node.kind.registry_id().to_owned(),
+            kind_label,
+            producer: format!(
+                "{} · hex {}",
+                String::from_utf8_lossy(&node.producer_identity),
+                hex::encode(&node.producer_identity)
+            ),
+            collected_at: node.collected_at,
+            content_digest: hex::encode(node.content_digest),
+            source: match &node.source_locator {
+                csv_sdk::accountability::SourceLocator::Disclosed(value) => value.clone(),
+                csv_sdk::accountability::SourceLocator::Withheld(digest) => {
+                    format!("Withheld commitment {}", hex::encode(digest))
+                }
+            },
+            classification: node.disclosure_classification.clone(),
+            is_gap,
+            is_withheld,
+        });
+    }
+
+    // Equal producers asserting different content about the same prerequisite
+    // is useful dispute triage, but it is not an authoritative contradiction.
+    let mut potential_contradictions = Vec::new();
+    for (index, (left_id, left)) in evidence.iter().enumerate() {
+        if !matches!(left.kind, EvidenceKind::Claim { .. }) {
+            continue;
+        }
+        for (right_id, right) in evidence.iter().skip(index + 1) {
+            if matches!(right.kind, EvidenceKind::Claim { .. })
+                && left.producer_identity == right.producer_identity
+                && left.relationships == right.relationships
+                && left.content_digest != right.content_digest
+            {
+                potential_contradictions.push(PotentialContradiction {
+                    left: hex::encode(left_id.as_bytes()),
+                    right: hex::encode(right_id.as_bytes()),
+                    explanation: "Same producer and prerequisites, but different claim content digests.",
+                });
+            }
+        }
+    }
+    EvidenceGraphInspection {
+        gap_count: nodes.iter().filter(|node| node.is_gap).count(),
+        withheld_count: nodes.iter().filter(|node| node.is_withheld).count(),
+        nodes,
+        edges,
+        potential_contradictions,
+    }
+}
+
 fn map_import_error(error: ImportError) -> LocalVerificationError {
     match error {
         ImportError::Empty => LocalVerificationError::EmptyImport,
@@ -389,7 +514,8 @@ pub const fn disposition_label(disposition: VerificationDisposition) -> &'static
 
 #[cfg(test)]
 mod inspector_tests {
-    use super::{LocalVerificationError, inspect_bundle};
+    use super::{LocalVerificationError, inspect_bundle, project_evidence_graph};
+    use csv_sdk::accountability::{EvidenceKind, EvidenceNode, SourceLocator};
 
     #[test]
     fn inspector_rejects_empty_and_malformed_artifacts() {
@@ -401,5 +527,83 @@ mod inspector_tests {
             inspect_bundle(br#"{"format":"unsupported"}"#),
             Err(LocalVerificationError::UnsupportedBundleEncoding)
         ));
+    }
+
+    fn node(kind: EvidenceKind, content: u8, source: SourceLocator) -> EvidenceNode {
+        EvidenceNode {
+            kind,
+            producer_identity: b"provider:github".to_vec(),
+            collected_at: 20,
+            asserted_event_at: Some(10),
+            content_digest: [content; 32],
+            media_type: "application/json".into(),
+            source_locator: source,
+            authenticity: None,
+            disclosure_classification: "case-participants".into(),
+            relationships: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn graph_projection_preserves_gaps_withholding_and_claim_distinctions() {
+        let claim_a = node(
+            EvidenceKind::Claim {
+                proposition_digest: [1; 32],
+            },
+            2,
+            SourceLocator::Disclosed("github:deployment:41".into()),
+        );
+        let claim_b = node(
+            EvidenceKind::Claim {
+                proposition_digest: [3; 32],
+            },
+            4,
+            SourceLocator::Withheld([5; 32]),
+        );
+        let gap = node(
+            EvidenceKind::EvidenceGap {
+                missing_registry_id: "org.diewan.evidence.observation.v1".into(),
+                reason_digest: [6; 32],
+            },
+            7,
+            SourceLocator::Withheld([8; 32]),
+        );
+        let evidence = vec![
+            (claim_a.id().unwrap(), claim_a),
+            (claim_b.id().unwrap(), claim_b),
+            (gap.id().unwrap(), gap),
+        ];
+        let graph = project_evidence_graph(&evidence);
+        assert_eq!(graph.gap_count, 1);
+        assert_eq!(graph.withheld_count, 2);
+        assert_eq!(graph.potential_contradictions.len(), 1);
+        assert_eq!(graph.nodes[0].kind_label, "Claim");
+        assert!(graph.nodes[2].is_gap);
+    }
+
+    #[test]
+    fn graph_projection_does_not_call_unrelated_claims_contradictory() {
+        let mut left = node(
+            EvidenceKind::Claim {
+                proposition_digest: [1; 32],
+            },
+            2,
+            SourceLocator::Disclosed("source:a".into()),
+        );
+        let mut right = node(
+            EvidenceKind::Claim {
+                proposition_digest: [3; 32],
+            },
+            4,
+            SourceLocator::Disclosed("source:b".into()),
+        );
+        left.producer_identity = b"producer:a".to_vec();
+        right.producer_identity = b"producer:b".to_vec();
+        let evidence = vec![(left.id().unwrap(), left), (right.id().unwrap(), right)];
+        assert!(
+            project_evidence_graph(&evidence)
+                .potential_contradictions
+                .is_empty()
+        );
     }
 }

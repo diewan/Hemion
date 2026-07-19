@@ -14,7 +14,7 @@ struct Destination {
     route: Route,
 }
 
-fn console_destinations() -> [Destination; 3] {
+fn console_destinations() -> [Destination; 4] {
     [
         Destination {
             label: "Console home",
@@ -30,6 +30,11 @@ fn console_destinations() -> [Destination; 3] {
             label: "Object inspector",
             icon: "⌗",
             route: Route::ObjectInspector {},
+        },
+        Destination {
+            label: "Dispute inspector",
+            icon: "⋈",
+            route: Route::DisputeInspector {},
         },
     ]
 }
@@ -117,6 +122,7 @@ mod tests {
         assert_eq!(console_destinations()[0].label, "Console home");
         assert_eq!(console_destinations()[1].label, "Bundle verifier");
         assert_eq!(console_destinations()[2].label, "Object inspector");
+        assert_eq!(console_destinations()[3].label, "Dispute inspector");
         assert_eq!(wallet_destinations()[0].label, "Legacy wallet");
         assert_eq!(wallet_destinations().len(), 5);
     }
