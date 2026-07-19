@@ -16,6 +16,7 @@
 
 // Common UI helpers (fully migrated)
 pub mod common;
+pub mod console;
 
 // NFT and Wallet pages (already separate files)
 pub mod nft_page;
@@ -34,6 +35,7 @@ pub mod validate;
 pub mod zk_proofs;
 
 // Re-exports from nft_page and wallet_page (standalone files)
+pub use console::ConsoleHome;
 pub use nft_page::{NftCollections, NftDetail, NftGallery};
 pub use wallet_page::WalletPage;
 

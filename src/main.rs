@@ -3,7 +3,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
-//! CSV Wallet — Standalone Multi-ChainId Wallet with Dioxus UI
+//! Hemion — local Parwana developer console with preserved legacy wallet tools.
 
 #![warn(missing_docs)]
 #![allow(non_snake_case)]
@@ -72,11 +72,40 @@ fn App() -> Element {
 
 const CRITICAL_CSS: &str = "
 *, *::before, *::after { box-sizing: border-box; }
-body { min-height: 100vh; margin: 0; padding: 0; background: #030712; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+body { min-height: 100vh; margin: 0; padding: 0; background: #14171c; color: #e7eaee; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
 #main { display: block; }
 ";
 
 const GLOBAL_CSS: &str = r#"
+:root {
+    --surface-0: #14171c; --surface-1: #1c2027; --surface-2: #242a33;
+    --ink-1: #e7eaee; --ink-2: #a9b1bc; --ink-3: #8993a1;
+    --rule: #3f4856; --interactive: #7fa6e8; --focus-ring: #7fa6e8;
+}
+.instrument-sidebar { width: 16rem; min-height: 100vh; position: sticky; top: 0; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface-1); border-right: 1px solid var(--rule); }
+.instrument-sidebar-closed { width: 4rem; }
+.instrument-brand, .instrument-nav-link, .instrument-nav-tab, .console-action { color: var(--ink-1); text-decoration: none; }
+.instrument-brand { min-height: 4rem; padding: .75rem; display: flex; align-items: center; gap: .5rem; border-bottom: 1px solid var(--rule); font-size: 1.125rem; font-weight: 600; }
+.instrument-nav { display: flex; flex: 1; flex-direction: column; gap: .25rem; padding: .5rem; }
+.instrument-nav-heading, .console-eyebrow { margin: .75rem .5rem .25rem; color: var(--ink-3); font: 500 .75rem/1.4 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.instrument-nav-link { min-height: 2.75rem; padding: .5rem .75rem; display: flex; align-items: center; gap: .75rem; border-radius: .375rem; }
+.instrument-nav-link:hover, .instrument-nav-tab:hover, .console-action:hover { background: var(--surface-2); }
+.instrument-boundary { padding: .75rem; color: var(--ink-3); font-size: .75rem; line-height: 1.5; }
+.instrument-tabs { display: none; }
+.instrument-brand:focus-visible, .instrument-nav-link:focus-visible, .instrument-nav-tab:focus-visible, .console-action:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.console-home { max-width: 72rem; margin: 0 auto; color: var(--ink-1); }
+.console-home h1 { margin: .25rem 0; font-size: 1.953rem; font-weight: 600; }
+.console-lede { max-width: 48rem; color: var(--ink-2); }
+.console-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: .75rem; margin-top: 1.5rem; }
+.console-panel, .console-notice { border: 1px solid var(--rule); background: var(--surface-1); padding: 1rem; }
+.console-panel h2 { margin-top: 0; font-size: 1rem; font-weight: 600; }
+.console-panel dl div { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; border-top: 1px solid var(--rule); }
+.console-panel dt { color: var(--ink-2); } .console-panel dd { margin: 0; }
+.console-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.console-limitation { color: var(--ink-3); font-size: .8125rem; }
+.console-action { display: inline-flex; min-height: 2.75rem; align-items: center; margin-top: .5rem; padding: .5rem .75rem; border: 1px solid var(--interactive); border-radius: .375rem; color: var(--interactive); }
+.console-notice { margin-top: .75rem; border-style: dashed; color: var(--ink-2); }
+.console-notice strong { color: var(--ink-1); }
 /* Page Transitions */
 .page-enter {
     animation: pageFadeIn 0.3s ease-out;
@@ -109,6 +138,9 @@ const GLOBAL_CSS: &str = r#"
 }
 @media (max-width: 767px) {
     .app-sidebar { display: none; }
+    .instrument-sidebar { display: none; }
+    .instrument-tabs { position: fixed; inset: auto 0 0; z-index: 60; display: flex; background: var(--surface-1); border-top: 1px solid var(--rule); }
+    .instrument-nav-tab { min-height: 2.75rem; flex: 1; padding: .5rem; display: flex; align-items: center; justify-content: center; gap: .5rem; font-size: .75rem; }
     .app-header-content { min-height: 0; padding-top: 0.5rem; padding-bottom: 0.5rem; align-items: flex-start; }
     .app-header-controls { flex: 1; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; }
     .app-header-controls > div { gap: 0.25rem; }

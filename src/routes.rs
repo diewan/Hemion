@@ -7,8 +7,12 @@ use crate::pages::*;
 #[derive(Routable, PartialEq, Clone, Debug)]
 pub enum Route {
     #[layout(Layout)]
-    // Main entry — Dashboard (shows wallet or create/import modal)
+    // S-H1 — local developer-console entry.
     #[route("/")]
+    ConsoleHome {},
+
+    // Legacy wallet entry. Existing wallet routes remain available unchanged.
+    #[route("/wallet")]
     Dashboard {},
 
     // Five task-oriented destinations.

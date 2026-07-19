@@ -30,9 +30,7 @@ pub fn Header(sidebar_open: bool, on_sidebar_toggle: EventHandler<()>) -> Elemen
                             if sidebar_open { "\u{25C0}" } else { "\u{25B6}" }
                         }
                         span { class: "text-sm text-gray-400",
-                            "CSV Wallet"
-                            span { class: "text-gray-600", " / " }
-                            span { class: "text-gray-200 font-medium", "Wallet" }
+                            "Hemion developer console"
                         }
                     }
 

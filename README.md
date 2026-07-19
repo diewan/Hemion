@@ -1,8 +1,22 @@
 # Hemion
 
-Standalone multi-chain wallet for the Parwana with a Dioxus-based UI.
+Hemion is the local-first developer console for Parwana. It is the place to
+inspect accountability objects and, as those capabilities land, verify bundles
+locally without treating a verdict recorded by another product as authoritative.
+The existing multi-chain wallet remains available under **Legacy wallet**; its
+routes and stored data are not migrated by this navigation refactor.
 
-## Features
+## Information architecture
+
+- **Console home** (`/`) identifies the local verifier boundary and exposes only
+  capabilities that work today.
+- **Legacy wallet** (`/wallet`) retains the previous wallet dashboard. Assets,
+  activity, contacts, and settings keep their existing routes beneath that area.
+- Bundle verification, assurance inspection, and object inspection are the
+  remaining Stage 7 console screens. They are deliberately absent from
+  navigation until their implementation tickets are complete.
+
+## Legacy wallet capabilities
 
 - Multi-chain support (Bitcoin, Ethereum, Sui, Aptos, Solana)
 - Encrypted key storage
@@ -13,12 +27,24 @@ Standalone multi-chain wallet for the Parwana with a Dioxus-based UI.
 
 ## Capability boundaries
 
-`Hemion` is the only graphical wallet product in this workspace. It never
+Hemion never
 creates simulated proofs, test results, balances, finality, or transfer
 success. Proof construction, proof acceptance, seal consumption, and
 cross-chain completion are runtime-owned operations; unavailable wallet
 capabilities render an explicit unavailable state instead of a best-effort
-result.
+result. An imported verdict is only "recorded elsewhere" until Hemion computes
+it locally under an explicit verification context.
+
+## Design traceability
+
+The console shell implements Flow Spec Part 8 (`S-H1` and `H-RULE-1`) using the
+Design System's Hemion “Instrument” skin. REV03 finding D-02 governs the
+corrected metadata color. The checked-in
+[`docs/accessibility/hemion-contrast-matrix.md`](docs/accessibility/hemion-contrast-matrix.md)
+matrix is enforced by
+`tests/console_shell.rs`; keyboard access uses native links and visible
+two-pixel `:focus-visible` outlines, and reduced-motion preferences disable
+shell animation.
 
 ## License
 

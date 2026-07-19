@@ -8,11 +8,11 @@ tailwind_output = "assets/tailwind.css"
 # Desktop is the primary distribution target. The web/WASM configuration below
 # remains available for a later `dx --web` build.
 [bundle]
-identifier = "io.hemion.wallet"
+identifier = "io.diewan.hemion"
 publisher = "Amin Razavi"
-category = "Finance"
-short_description = "A standalone multi-chain Parwana wallet"
-long_description = "Hemion is a standalone multi-chain wallet for managing Parwanaaccounts, sanads, seals, and encrypted wallet backups."
+category = "DeveloperTool"
+short_description = "Local Parwana developer console"
+long_description = "Hemion is the local-first Parwana developer console. It keeps the legacy multi-chain wallet available as a separate tool area."
 
 [web.app]
 title = "Hemion"
