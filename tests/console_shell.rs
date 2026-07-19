@@ -62,10 +62,11 @@ fn console_is_primary_and_legacy_wallet_remains_routable() {
 }
 
 #[test]
-fn bundle_verifier_is_exposed_but_later_inspectors_are_not() {
+fn bundle_verifier_and_object_inspector_are_exposed_but_later_assurance_is_not() {
     let navigation = read("src/components/sidebar.rs");
     assert!(navigation.contains("label: \"Bundle verifier\""));
-    for absent in ["Assurance inspector", "Object inspector"] {
+    assert!(navigation.contains("label: \"Object inspector\""));
+    for absent in ["Assurance inspector"] {
         assert!(
             !navigation.contains(&format!("label: \"{absent}")),
             "unfinished destination exposed: {absent}"
@@ -75,6 +76,23 @@ fn bundle_verifier_is_exposed_but_later_inspectors_are_not() {
     let css = read("src/main.rs");
     assert!(css.contains(":focus-visible { outline: 2px"));
     assert!(css.contains("prefers-reduced-motion: reduce"));
+}
+
+#[test]
+fn object_inspector_is_read_only_accessible_and_evidence_first() {
+    let page = read("src/pages/object_inspector.rs");
+    assert!(page.contains("Canonical bytes"));
+    assert!(page.contains("Replay timeline"));
+    assert!(page.contains("ActionMandate"));
+    assert!(page.contains("ExecutionReceipt"));
+    assert!(page.contains("Absence of a row does not establish non-occurrence."));
+    assert!(page.contains("tabindex: \"0\""));
+    for prohibited in ["Approve & sign", "Execute mandate", "Mark consumed"] {
+        assert!(
+            !page.contains(prohibited),
+            "inspector exposes mutation: {prohibited}"
+        );
+    }
 }
 
 #[test]

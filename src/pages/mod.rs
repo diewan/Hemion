@@ -18,6 +18,7 @@
 pub mod bundle_verify;
 pub mod common;
 pub mod console;
+pub mod object_inspector;
 
 // NFT and Wallet pages (already separate files)
 pub mod nft_page;
@@ -39,6 +40,7 @@ pub mod zk_proofs;
 pub use bundle_verify::BundleVerify;
 pub use console::ConsoleHome;
 pub use nft_page::{NftCollections, NftDetail, NftGallery};
+pub use object_inspector::ObjectInspector;
 pub use wallet_page::WalletPage;
 
 // Re-exports from accounts module

@@ -14,7 +14,7 @@ struct Destination {
     route: Route,
 }
 
-fn console_destinations() -> [Destination; 2] {
+fn console_destinations() -> [Destination; 3] {
     [
         Destination {
             label: "Console home",
@@ -25,6 +25,11 @@ fn console_destinations() -> [Destination; 2] {
             label: "Bundle verifier",
             icon: "✓",
             route: Route::BundleVerify {},
+        },
+        Destination {
+            label: "Object inspector",
+            icon: "⌗",
+            route: Route::ObjectInspector {},
         },
     ]
 }
@@ -111,6 +116,7 @@ mod tests {
     fn navigation_exposes_only_working_console_screen_and_legacy_wallet() {
         assert_eq!(console_destinations()[0].label, "Console home");
         assert_eq!(console_destinations()[1].label, "Bundle verifier");
+        assert_eq!(console_destinations()[2].label, "Object inspector");
         assert_eq!(wallet_destinations()[0].label, "Legacy wallet");
         assert_eq!(wallet_destinations().len(), 5);
     }

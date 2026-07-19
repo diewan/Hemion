@@ -12,6 +12,8 @@ pub enum Route {
     ConsoleHome {},
     #[route("/verify")]
     BundleVerify {},
+    #[route("/inspect")]
+    ObjectInspector {},
 
     // Legacy wallet entry. Existing wallet routes remain available unchanged.
     #[route("/wallet")]
