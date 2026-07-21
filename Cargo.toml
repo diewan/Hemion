@@ -17,7 +17,7 @@ path = "src/main.rs"
 
 [dependencies]
 # Dioxus UI
-dioxus = { version = "0.7", features = ["web", "router"] }
+dioxus = { version = "0.7", features = ["desktop", "router"] }
 
 # Cryptography - wasm compatible
 getrandom = { workspace = true }
@@ -54,6 +54,8 @@ serde_json = "1.0"
 thiserror = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v4", "serde", "js"] }
+# Open external URLs (GitHub repo/deployment) in the system browser.
+webbrowser = "1.2"
 
 # Web/wasm
 console_error_panic_hook = "0.1"

@@ -8,16 +8,56 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn TuppiraExplorer() -> Element {
-    let mut api_url = use_signal(String::new);
-    let mut tenant_id = use_signal(String::new);
-    let mut access_token = use_signal(String::new);
-    let mut observation_id = use_signal(String::new);
+    // Demo pre-fills for the Piteka→Tuppira→Hemion trace. These point at the
+    // local demo services; clear or overwrite them for any other environment.
+    let mut api_url = use_signal(|| "http://127.0.0.1:8081".to_string());
+    let mut tenant_id = use_signal(|| "demo-tenant".to_string());
+    let mut access_token = use_signal(|| "demo-observation-token".to_string());
+    let mut observation_id = use_signal(|| {
+        "observation:piteka:rcpt-att-c85e4adf654355b383da5e0600e1ae475b5101d8b175e8c2777c174499c7c983:revision:1"
+            .to_string()
+    });
     let mut lineage = use_signal(Vec::<ObservationProjection>::new);
     let mut source_health = use_signal(Vec::<crate::services::tuppira::SourceHealth>::new);
     let mut selected = use_signal(|| None::<ObservationProjection>);
     let mut bundle = use_signal(String::new);
     let mut context = use_signal(String::new);
     let mut status = use_signal(|| None::<String>);
+
+    // Demo convenience: when the page opens with pre-filled values, run
+    // discovery once so the Piteka→Tuppira trace loads without extra clicks.
+    // `.peek()` reads without subscribing, so this fires only on mount.
+    use_effect(move || {
+        let environment = TuppiraEnvironment {
+            api_base_url: api_url.peek().clone(),
+            tenant_id: tenant_id.peek().clone(),
+            access_token: access_token.peek().clone(),
+        };
+        let id = observation_id.peek().clone();
+        if environment.api_base_url.is_empty() || id.is_empty() {
+            return;
+        }
+        status.set(Some("Auto-loading tenant-visible lineage and source health…".into()));
+        spawn(async move {
+            match discover(&LiveTuppiraApi, &environment, &id).await {
+                Ok((found, health)) => {
+                    lineage.set(found);
+                    source_health.set(health);
+                    selected.set(None);
+                    status.set(Some(
+                        "Discovery projection loaded · recorded elsewhere, not locally verified."
+                            .into(),
+                    ));
+                }
+                Err(error) => {
+                    lineage.set(vec![]);
+                    source_health.set(vec![]);
+                    selected.set(None);
+                    status.set(Some(format!("Discovery unavailable · {error}")));
+                }
+            }
+        });
+    });
 
     rsx! {
         section { class: "console-home tuppira-explorer", aria_labelledby: "tuppira-title",

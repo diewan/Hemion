@@ -274,6 +274,21 @@ impl TuppiraEnvironment {
     pub fn source_health_request(&self) -> Result<AuthorizedGet, TuppiraConnectionError> {
         self.request("/api/v1/observation-sources/health")
     }
+
+    /// The live discovery feed: most-recent tenant-visible observations.
+    pub fn list_request(&self, limit: u32) -> Result<AuthorizedGet, TuppiraConnectionError> {
+        self.request(&format!("/api/v1/observations?limit={limit}"))
+    }
+}
+
+/// Fetch the most recent observations for the live explorer feed. The response
+/// shape matches lineage, so the lineage read path is reused.
+pub async fn list_observations<P: TuppiraApiPort>(
+    api: &P,
+    environment: &TuppiraEnvironment,
+    limit: u32,
+) -> Result<Vec<ObservationProjection>, TuppiraConnectionError> {
+    api.get_lineage(environment.list_request(limit)?).await
 }
 
 pub async fn discover<P: TuppiraApiPort>(
