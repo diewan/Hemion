@@ -37,7 +37,9 @@ pub fn TuppiraExplorer() -> Element {
         if environment.api_base_url.is_empty() || id.is_empty() {
             return;
         }
-        status.set(Some("Auto-loading tenant-visible lineage and source health…".into()));
+        status.set(Some(
+            "Auto-loading tenant-visible lineage and source health…".into(),
+        ));
         spawn(async move {
             match discover(&LiveTuppiraApi, &environment, &id).await {
                 Ok((found, health)) => {

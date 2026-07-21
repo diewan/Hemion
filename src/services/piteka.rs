@@ -213,7 +213,9 @@ impl PitekaApiPort for LivePitekaApi {
             .await
             .map_err(|error| PitekaConnectionError::Api(error.to_string()))?;
         if bytes.len() > MAX_EXPORT_BYTES {
-            return Err(PitekaConnectionError::Api("chain exceeds size limit".into()));
+            return Err(PitekaConnectionError::Api(
+                "chain exceeds size limit".into(),
+            ));
         }
         serde_json::from_slice(&bytes).map_err(|_| PitekaConnectionError::MalformedChain)
     }
@@ -324,7 +326,9 @@ async fn wasm_fetch_bytes(request: AuthorizedGet) -> Result<Vec<u8>, PitekaConne
     .map_err(|_| PitekaConnectionError::Api("response unreadable".into()))?;
     let bytes = js_sys::Uint8Array::new(&buffer).to_vec();
     if bytes.len() > MAX_EXPORT_BYTES {
-        return Err(PitekaConnectionError::Api("chain exceeds size limit".into()));
+        return Err(PitekaConnectionError::Api(
+            "chain exceeds size limit".into(),
+        ));
     }
     Ok(bytes)
 }

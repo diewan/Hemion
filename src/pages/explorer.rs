@@ -16,7 +16,9 @@ use std::time::Duration;
 use dioxus::prelude::*;
 
 use crate::services::bundle_verifier::disposition_label;
-use crate::services::piteka::{LivePitekaApi, MandateChain, PitekaEnvironment, download_and_verify, fetch_chain};
+use crate::services::piteka::{
+    LivePitekaApi, MandateChain, PitekaEnvironment, download_and_verify, fetch_chain,
+};
 use crate::services::tuppira::{
     LiveTuppiraApi, ObservationProjection, TuppiraEnvironment, list_observations,
 };

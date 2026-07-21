@@ -2,7 +2,8 @@
 
 use csv_sdk::accountability::{
     ActionIntent, ActionMandate, AssuranceProfile, ContextBoundOutput, EvidenceKind, EvidenceNode,
-    EvidenceNodeId, ExecutionAttempt, ExecutionReceipt, VerificationContext, VerificationContextId,
+    EvidenceNodeId, ExecutionAttempt, ExecutionReceipt, SealConsumptionRecord, VerificationContext,
+    VerificationContextId,
 };
 use csv_sdk::accountability_verification::{
     AlgorithmStatus, AuthenticityStatus, ImportError, ReplayStatus, RevocationStatus,
@@ -20,6 +21,10 @@ pub struct LocalVerificationBundle {
     pub attempt: ExecutionAttempt,
     pub receipt: ExecutionReceipt,
     pub evidence: Vec<(EvidenceNodeId, EvidenceNode)>,
+    /// Optional preserved single-use anchor re-checked offline for independent single-use
+    /// enforcement (Phase B). `None` when the bundle carried no seal-consumption record,
+    /// which the verifier reports as an external-corroboration limitation, not a failure.
+    pub single_use_anchor: Option<SealConsumptionRecord>,
 }
 
 /// Read-only presentation data derived from SDK-owned protocol objects.
@@ -190,6 +195,7 @@ pub fn verify_locally(
             revocation_status: choice.revocation_status,
             algorithm_status: choice.algorithm_status,
             replay_status: choice.replay_status,
+            single_use_anchor: bundle.single_use_anchor.as_ref(),
         },
     )
     .map_err(|_| LocalVerificationError::ContextInvalid)?;
@@ -309,7 +315,7 @@ pub fn inspect_bundle(bytes: &[u8]) -> Result<ObjectInspection, LocalVerificatio
             summary: format!(
                 "Single-use authority for {} in profile {}",
                 decoded.intent.action_type,
-                hex::encode(decoded.intent.profile_id.as_bytes())
+                decoded.intent.profile_id.as_str()
             ),
             id: hex::encode(mandate_id.as_bytes()),
             canonical_hex: hex::encode(mandate_bytes),
@@ -485,6 +491,10 @@ pub fn import_and_verify(
         attempt: decoded.attempt,
         receipt: decoded.receipt,
         evidence: decoded.evidence,
+        // The SDK bundle decoder does not yet surface a disclosed seal-consumption
+        // object; until it does, the external-corroboration dimension reports the
+        // anchor as absent (a limitation), never a failure.
+        single_use_anchor: None,
     };
     verify_locally(&bundle, contexts, selected_context)
 }
