@@ -491,10 +491,10 @@ pub fn import_and_verify(
         attempt: decoded.attempt,
         receipt: decoded.receipt,
         evidence: decoded.evidence,
-        // The SDK bundle decoder does not yet surface a disclosed seal-consumption
-        // object; until it does, the external-corroboration dimension reports the
-        // anchor as absent (a limitation), never a failure.
-        single_use_anchor: None,
+        // The SDK decoder now surfaces any disclosed seal-consumption record; when the
+        // bundle carried one, the external-corroboration dimension re-checks it offline.
+        // Its absence stays a limitation, never a failure (§5.5, §5.9).
+        single_use_anchor: decoded.single_use_anchor,
     };
     verify_locally(&bundle, contexts, selected_context)
 }
