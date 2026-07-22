@@ -1,6 +1,9 @@
 //! G-05 — accessible evidence graph and dispute inspector.
 
-use crate::services::bundle_verifier::{EvidenceGraphInspection, inspect_evidence_graph};
+use crate::services::bundle_verifier::{
+    EvidenceGraphInspection, LocalVerificationResult, import_and_verify, import_context,
+    inspect_evidence_graph,
+};
 use dioxus::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -33,6 +36,13 @@ pub fn DisputeInspector() -> Element {
     let mut error = use_signal(|| None::<String>);
     let mut filter = use_signal(|| NodeFilter::All);
     let mut table_view = use_signal(|| false);
+    // Independent verdict: a separately-pasted, hash-bound verification context
+    // drives the pinned Parwana verifier so an overreach surfaces as a failed
+    // Authority dimension with its reason codes (DEMO-03). The bundle can never
+    // choose its own trust inputs, so the context is imported separately.
+    let mut context_input = use_signal(String::new);
+    let mut verdict = use_signal(|| None::<LocalVerificationResult>);
+    let mut verdict_error = use_signal(|| None::<String>);
     rsx! {
         section { class: "console-home dispute-inspector", aria_labelledby: "dispute-title",
             p { class: "console-eyebrow", "HEMION / LOCAL INSTRUMENT" }
@@ -47,6 +57,41 @@ pub fn DisputeInspector() -> Element {
                 Err(value) => { graph.set(None); error.set(Some(format!("Inspection did not run · {value:?}. Unsupported, malformed, or inconsistent graphs are rejected."))); }
             }, "Inspect evidence" }
             if let Some(message) = error() { output { class: "console-notice", aria_live: "assertive", "{message}" } }
+
+            label { class: "console-panel inspector-import", r#for: "context-input",
+                h2 { "Verification context (independent verdict)" }
+                textarea { id: "context-input", rows: 6, value: "{context_input}", oninput: move |event| context_input.set(event.value()), placeholder: "Paste org.diewan.accountability.verification-context.v1 JSON" }
+            }
+            button { class: "console-action", r#type: "button", disabled: input().is_empty() || context_input().is_empty(), onclick: move |_| {
+                match import_context(context_input().as_bytes()) {
+                    Ok(choice) => {
+                        let selected = choice.name.clone();
+                        match import_and_verify(input().as_bytes(), std::slice::from_ref(&choice), &selected) {
+                            Ok(result) => { verdict.set(Some(result)); verdict_error.set(None); }
+                            Err(value) => { verdict.set(None); verdict_error.set(Some(format!("Verification did not run · {value:?}. The bundle is unsupported, malformed, or inconsistent with the context."))); }
+                        }
+                    }
+                    Err(value) => { verdict.set(None); verdict_error.set(Some(format!("Context rejected · {value:?}. Supply a supported, hash-bound verification context."))); }
+                }
+            }, "Assess authority (run local verifier)" }
+            if let Some(message) = verdict_error() { output { class: "console-notice", aria_live: "assertive", "{message}" } }
+            if let Some(result) = verdict() {
+                section { class: "console-panel assurance-verdict", aria_label: "Independent assurance verdict",
+                    h2 { "Assurance dimensions" }
+                    p { class: "console-limitation", "Verdict under context \"{result.context_name}\". This is the pinned Parwana verifier's conclusion, limited to the selected, hash-bound context — never a claim of factual truth." }
+                    ul { class: "assurance-dimension-list",
+                        for dimension in result.assurance.dimensions.iter() {
+                            li { class: dimension_class(dimension.status),
+                                strong { "{dimension.dimension:?}" }
+                                span { class: "assurance-status", " — {dimension.status:?}" }
+                                if !dimension.reason_codes.is_empty() { ul { class: "assurance-reason-codes", for code in dimension.reason_codes.iter() { li { code { "{code}" } } } } }
+                                if !dimension.limitations.is_empty() { ul { class: "assurance-limitations", for limitation in dimension.limitations.iter() { li { "{limitation}" } } } }
+                            }
+                        }
+                    }
+                }
+            }
+
             if let Some(value) = graph() {
                 section { class: "dispute-alerts", aria_label: "Dispute signals",
                     article { class: "dispute-alert dispute-gap", h2 { "Evidence gaps" } strong { "{value.gap_count}" } p { "Explicit gap nodes report unavailable evidence; they do not report non-occurrence." } }
@@ -89,6 +134,15 @@ fn matches_filter(
         NodeFilter::Attestations => node.kind_label == "Attestation",
         NodeFilter::Gaps => node.is_gap,
         NodeFilter::Withheld => node.is_withheld,
+    }
+}
+fn dimension_class(status: csv_sdk::accountability::DimensionStatus) -> &'static str {
+    use csv_sdk::accountability::DimensionStatus;
+    match status {
+        DimensionStatus::NotSatisfied => "assurance-dimension assurance-dimension-failed",
+        DimensionStatus::Indeterminate => "assurance-dimension assurance-dimension-indeterminate",
+        DimensionStatus::Satisfied => "assurance-dimension assurance-dimension-satisfied",
+        DimensionStatus::NotApplicable => "assurance-dimension assurance-dimension-na",
     }
 }
 fn status_class(node: &crate::services::bundle_verifier::EvidenceGraphNode) -> &'static str {

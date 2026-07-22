@@ -11,7 +11,24 @@ use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::collections::HashSet;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+/// Cross-platform async sleep for presentation-layer polling loops.
+///
+/// The explorer and other views poll remote runtimes on both targets. Native
+/// builds use tokio's timer; the wasm bundle uses the browser's timer via
+/// `gloo-timers`, because tokio's time driver does not compile for wasm32.
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn sleep(duration: Duration) {
+    tokio::time::sleep(duration).await;
+}
+
+/// Cross-platform async sleep for presentation-layer polling loops. See the
+/// native variant for details.
+#[cfg(target_arch = "wasm32")]
+pub async fn sleep(duration: Duration) {
+    gloo_timers::future::sleep(duration).await;
+}
 
 /// Errors returned at the presentation/platform boundary.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

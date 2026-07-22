@@ -14,7 +14,7 @@ pub fn TuppiraExplorer() -> Element {
     let mut tenant_id = use_signal(|| "demo-tenant".to_string());
     let mut access_token = use_signal(|| "demo-observation-token".to_string());
     let mut observation_id = use_signal(|| {
-        "observation:piteka:rcpt-att-c85e4adf654355b383da5e0600e1ae475b5101d8b175e8c2777c174499c7c983:revision:1"
+        "observation:piteka:rcpt-att-cd654dcda074f13369baf88c1599209abb8b7084cf9246a05ad0c2244069935f:revision:1"
             .to_string()
     });
     let mut lineage = use_signal(Vec::<ObservationProjection>::new);

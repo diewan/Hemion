@@ -16,8 +16,12 @@ name = "hemion"
 path = "src/main.rs"
 
 [dependencies]
-# Dioxus UI
-dioxus = { version = "0.7", features = ["desktop", "router"] }
+# Dioxus core UI. The renderer (desktop vs web) is selected per target below:
+# a desktop renderer pulls in wry/tao (GTK/WebKit) plus a large native stack
+# (native-tls/openssl via tungstenite, image/ravif/rav1e) that cannot and must
+# not compile to wasm32. The web renderer is the correct choice for the wasm
+# bundle that `dx build --platform web` produces and nginx serves.
+dioxus = { version = "0.7", features = ["router"] }
 
 # Cryptography - wasm compatible
 getrandom = { workspace = true }
@@ -74,6 +78,8 @@ base64 = "0.21"
 
 # Native-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# Desktop renderer (wry/tao) for the native binary.
+dioxus = { version = "0.7", features = ["desktop"] }
 csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "bitcoin", "tokio", "runtime-coordinator", "accountability"] }
 tokio = { version = "1.0", features = ["macros", "rt", "sync", "time"] }
 tokio-tungstenite = { version = "0.20", optional = true }
@@ -83,6 +89,8 @@ rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "a
 
 # WASM-only dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+# Web renderer (wasm-bindgen DOM) for the browser bundle.
+dioxus = { version = "0.7", features = ["web"] }
 csv-sdk = { version = "=0.1.5", path = "../parwana/csv-sdk", default-features = false, features = ["client", "consumer-wallet", "wasm", "accountability"] }
 
 [dev-dependencies]

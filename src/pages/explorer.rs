@@ -84,7 +84,7 @@ pub fn Explorer() -> Element {
                         }
                     }
                 }
-                tokio::time::sleep(Duration::from_secs(POLL_SECONDS)).await;
+                crate::services::platform::sleep(Duration::from_secs(POLL_SECONDS)).await;
             }
         });
     });
