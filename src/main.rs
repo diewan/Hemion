@@ -159,6 +159,12 @@ const GLOBAL_CSS: &str = r#"
 .finality-lane-anchored[data-state="unavailable"], .finality-lane-anchored[data-state="none"] { border-color: #a9b1bc; border-style: dashed; }
 .finality-lane-buffered[data-state="present"] { border-color: var(--interactive); }
 .finality-lane-buffered[data-state="absent"] { border-color: #a9b1bc; border-style: dashed; }
+.object-relationships { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .375rem; }
+.object-relationships li { display: flex; flex-wrap: wrap; gap: .25rem; align-items: baseline; }
+.object-rel-label { color: var(--ink-2); font-size: .8125rem; }
+.object-rel-link { color: var(--interactive); text-decoration: none; font-weight: 600; }
+.object-rel-link:hover, .object-rel-link:focus-visible { text-decoration: underline; }
+.object-id { overflow-wrap: anywhere; }
 .dispute-controls { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
 .dispute-controls fieldset { border: 0; margin: 0; padding: 0; } .dispute-controls .console-action { margin-right: .375rem; }
 .dispute-controls [aria-pressed="true"] { color: var(--surface-0); background: var(--interactive); }

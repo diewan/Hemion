@@ -23,6 +23,11 @@ routes and stored data are not migrated by this navigation refactor.
   (none / pending / final). The anchored lane reflects real chain finality only —
   a pending or unknown read is never rendered as final — and shows an explicit
   *unavailable* state until ANCHOR-01 supplies a chain finality source.
+- **Object pages** (`/object/<kind>/<id>`) give each accountability object type —
+  mandate, action, receipt, dispute, assurance, anchor — a deep-linkable detail
+  page (HEM-03): summary → canonical bytes → relationships, cross-linked along the
+  evidence DAG. The pages reuse the existing inspectors as the canonical-byte
+  decoders rather than replacing them; withheld/redacted fields stay protected.
 - **Legacy wallet** (`/wallet`) retains the previous wallet dashboard. Assets,
   activity, contacts, and settings keep their existing routes beneath that area.
   The chain services that back Anchoring are no longer quarantined here.

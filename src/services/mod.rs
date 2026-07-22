@@ -10,6 +10,7 @@ pub mod explorer;
 pub mod fixture_lab;
 pub mod http;
 pub mod network;
+pub mod object_model;
 pub mod observation;
 pub mod piteka;
 pub mod platform;

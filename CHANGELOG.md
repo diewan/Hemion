@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HEM-03** — each accountability object type now has a deep-linkable object
+  page at `/object/<kind>/<id>` (mandate, action, receipt, dispute, assurance,
+  anchor). A new pure `services::object_model` names the kinds, their stable
+  route slugs, and the cross-links that follow the evidence DAG, plus two
+  disclosure helpers: `reason_code_display` preserves the exact stable namespaced
+  identifier, and `FieldDisclosure` keeps withheld/redacted values protected (the
+  value is never returned, and a withheld marker never claims the field is empty).
+  The `ObjectPage` shell renders summary → canonical bytes → relationships and
+  reuses the existing inspectors as the canonical-byte decoders (no protocol or
+  internal-struct imports). Tests cover slug round-tripping, the full
+  mandate→receipt→dispute→assurance DAG traversal, reason-code stability, and
+  redaction protection. Native + wasm32 build green.
 - **HEM-02** — the trace view now shows **dual-lane finality**. A new
   `components::finality_lanes` module models a *buffered* lane (present/absent in
   the observation plane) beside an *anchored* lane (`none` / `pending` / `final` /

@@ -16,6 +16,9 @@ pub enum Route {
     AssuranceInspector {},
     #[route("/inspect")]
     ObjectInspector {},
+    // Deep-linkable object detail page per accountability object type (HEM-03).
+    #[route("/object/:kind/:id")]
+    ObjectPage { kind: String, id: String },
     #[route("/disputes")]
     DisputeInspector {},
     #[route("/fixtures")]
