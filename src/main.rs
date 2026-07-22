@@ -77,10 +77,31 @@ body { min-height: 100vh; margin: 0; padding: 0; background: #14171c; color: #e7
 ";
 
 const GLOBAL_CSS: &str = r#"
+/* Deliberate, dark-first design tokens (HEM-05). Dark is the default; a light
+   theme is served when the viewer prefers it, and an explicit data-theme on the
+   root wins in either direction. Both themes pass the WCAG-AA text matrix
+   enforced in tests/console_shell.rs. */
 :root {
     --surface-0: #14171c; --surface-1: #1c2027; --surface-2: #242a33;
     --ink-1: #e7eaee; --ink-2: #a9b1bc; --ink-3: #8993a1;
     --rule: #3f4856; --interactive: #7fa6e8; --focus-ring: #7fa6e8;
+}
+:root[data-theme="dark"] {
+    --surface-0: #14171c; --surface-1: #1c2027; --surface-2: #242a33;
+    --ink-1: #e7eaee; --ink-2: #a9b1bc; --ink-3: #8993a1;
+    --rule: #3f4856; --interactive: #7fa6e8; --focus-ring: #7fa6e8;
+}
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --surface-0: #fbfcfd; --surface-1: #f2f4f7; --surface-2: #e7ebf0;
+        --ink-1: #1b2027; --ink-2: #47505c; --ink-3: #5c6673;
+        --rule: #cbd2dc; --interactive: #2f5fb0; --focus-ring: #2f5fb0;
+    }
+}
+:root[data-theme="light"] {
+    --surface-0: #fbfcfd; --surface-1: #f2f4f7; --surface-2: #e7ebf0;
+    --ink-1: #1b2027; --ink-2: #47505c; --ink-3: #5c6673;
+    --rule: #cbd2dc; --interactive: #2f5fb0; --focus-ring: #2f5fb0;
 }
 /* Constrain the shell to the viewport so the main content area (overflow-auto)
    becomes the scroll container, instead of the whole document growing past the
@@ -177,6 +198,25 @@ const GLOBAL_CSS: &str = r#"
 .lineage-table thead th { background: var(--surface-2); }
 .lineage-links { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
 .lineage-node-title { color: var(--ink-2); }
+.portfolio-masthead { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
+.boundary-badge { font-size: .75rem; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: .125rem .625rem; }
+.portfolio-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: .5rem; margin: 1rem 0; }
+.portfolio-stat { border: 1px solid var(--rule); background: var(--surface-1); padding: .75rem; display: flex; flex-direction: column; gap: .125rem; }
+.portfolio-stat-value { font-size: 1.5rem; font-weight: 600; }
+.portfolio-stat-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); }
+.portfolio-loader { margin: 1rem 0; }
+.portfolio-entities { display: grid; gap: .75rem; }
+.portfolio-entity-head { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: baseline; }
+.portfolio-entity-head h2 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.portfolio-entity-counts { font-size: .8125rem; color: var(--ink-2); }
+.portfolio-tiles { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: .5rem; }
+.portfolio-tile { border: 1px solid var(--rule); background: var(--surface-2); padding: .625rem; display: flex; flex-direction: column; gap: .375rem; }
+.portfolio-tile[data-disputed="true"] { border-color: #d6a85f; }
+.portfolio-tile-id { text-decoration: none; color: var(--interactive); overflow-wrap: anywhere; }
+.portfolio-tile-id:hover, .portfolio-tile-id:focus-visible { text-decoration: underline; }
+.portfolio-tile-badges { display: flex; flex-wrap: wrap; gap: .25rem; }
+.portfolio-badge { font-size: .6875rem; text-transform: uppercase; letter-spacing: .03em; border: 1px solid var(--rule); padding: .0625rem .375rem; color: var(--ink-2); }
+.portfolio-badge-disputed { color: var(--ink-1); border-color: #d6a85f; }
 .dispute-controls { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
 .dispute-controls fieldset { border: 0; margin: 0; padding: 0; } .dispute-controls .console-action { margin-right: .375rem; }
 .dispute-controls [aria-pressed="true"] { color: var(--surface-0); background: var(--interactive); }

@@ -32,8 +32,8 @@ pub fn ConsoleHome() -> Element {
 
                 article { class: "console-panel",
                     h2 { "Available tools" }
-                    p { "The existing wallet is preserved as a separate legacy tool area." }
-                    Link { to: Route::Dashboard {}, class: "console-action", "Open legacy wallet" }
+                    p { "The existing wallet is preserved as a separate tool area." }
+                    Link { to: Route::Dashboard {}, class: "console-action", "Open wallet" }
                 }
             }
 

@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HEM-05** — a portfolio-of-mandates home and a deliberate light+dark design
+  system. The default route is now `PortfolioHome`, which groups mandates by
+  accountable entity and state with the anchored-vs-buffered split per tile; cards
+  are projected from **real** Piteka mandate-chain reads (new pure
+  `services::portfolio` with `MandateCard::from_chain`, entity grouping, and
+  portfolio counts) — nothing is simulated, and with none loaded the home shows an
+  explicit empty state. The developer console moves to `/console` and stays
+  reachable; the local-verifier boundary becomes a badge rather than the whole
+  home. The instrument tokens gain a light theme (served on
+  `prefers-color-scheme: light`, with `:root[data-theme]` overrides winning either
+  way); both themes clear the WCAG-AA text matrix, now covered by a light-theme
+  contrast test in `tests/console_shell.rs`. The wallet is retained but no longer
+  framed as a second-class "legacy" tool in navigation (routes unchanged).
 - **HEM-04** — a universal accountability search and lineage graph. A new pure
   `services::search` classifies a query (typed `mandate:`/`receipt:`/`action:`/
   `dispute:`/`assurance:`/`anchor:` digests, `entity:`, `tx:`, or an

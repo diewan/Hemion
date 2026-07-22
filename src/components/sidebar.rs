@@ -72,7 +72,7 @@ fn console_destinations() -> [Destination; 10] {
 fn wallet_destinations() -> [Destination; 5] {
     [
         Destination {
-            label: "Legacy wallet",
+            label: "Wallet",
             icon: "⌂",
             route: Route::Dashboard {},
         },
@@ -121,14 +121,14 @@ pub fn Sidebar(sidebar_open: bool) -> Element {
         aside {
             class: if sidebar_open { "instrument-sidebar instrument-sidebar-open" } else { "instrument-sidebar instrument-sidebar-closed" },
             aria_label: "Primary navigation",
-            Link { to: Route::ConsoleHome {}, class: "instrument-brand",
+            Link { to: Route::PortfolioHome {}, class: "instrument-brand",
                 span { aria_hidden: "true", "◈" }
                 if sidebar_open { span { "Hemion" } }
             }
             nav { class: "instrument-nav", aria_label: "Developer console",
                 if sidebar_open { p { class: "instrument-nav-heading", "Console" } }
                 for destination in console_destinations() { {navigation_link(destination, false)} }
-                if sidebar_open { p { class: "instrument-nav-heading", "Legacy tools" } }
+                if sidebar_open { p { class: "instrument-nav-heading", "Wallet" } }
                 for destination in wallet_destinations() { {navigation_link(destination, false)} }
             }
             if sidebar_open {
@@ -161,15 +161,17 @@ mod tests {
         assert_eq!(console_destinations()[7].label, "Dispute inspector");
         assert_eq!(console_destinations()[8].label, "Fixture lab");
         assert_eq!(console_destinations()[9].label, "Tuppira explorer");
-        assert_eq!(wallet_destinations()[0].label, "Legacy wallet");
+        // The wallet is preserved but no longer framed as "Legacy" / second-class
+        // (HEM-05); its routes are unchanged.
+        assert_eq!(wallet_destinations()[0].label, "Wallet");
         assert_eq!(wallet_destinations().len(), 5);
     }
 
     #[test]
-    fn anchoring_is_not_under_the_legacy_wallet_group() {
+    fn anchoring_is_not_under_the_wallet_group() {
         assert!(
             !wallet_destinations().iter().any(|d| d.label == "Anchoring"),
-            "Anchoring must not appear in the legacy wallet group"
+            "Anchoring must not appear in the wallet group"
         );
         assert!(console_destinations().iter().any(|d| d.label == "Anchoring"));
     }

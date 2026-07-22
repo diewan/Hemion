@@ -7,8 +7,11 @@ use crate::pages::*;
 #[derive(Routable, PartialEq, Clone, Debug)]
 pub enum Route {
     #[layout(Layout)]
-    // S-H1 — local developer-console entry.
+    // Portfolio-of-mandates home is the default entry point (HEM-05).
     #[route("/")]
+    PortfolioHome {},
+    // S-H1 — local developer-console entry, still reachable.
+    #[route("/console")]
     ConsoleHome {},
     #[route("/verify")]
     BundleVerify {},

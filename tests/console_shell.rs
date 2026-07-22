@@ -62,13 +62,44 @@ fn wcag_aa_console_text_matrix_passes() {
 }
 
 #[test]
-fn console_is_primary_and_legacy_wallet_remains_routable() {
+fn portfolio_is_the_home_and_console_and_wallet_remain_routable() {
     let routes = read("src/routes.rs");
-    assert!(routes.contains("#[route(\"/\")]\n    ConsoleHome"));
+    // HEM-05: the portfolio-of-mandates home is the default route; the developer
+    // console moves to /console but stays reachable, and the wallet keeps its
+    // routes.
+    assert!(routes.contains("#[route(\"/\")]\n    PortfolioHome"));
+    assert!(routes.contains("#[route(\"/console\")]\n    ConsoleHome"));
     assert!(routes.contains("#[route(\"/wallet\")]\n    Dashboard"));
     for route in ["/assets", "/activity", "/contacts", "/settings"] {
         assert!(routes.contains(route));
     }
+}
+
+#[test]
+fn wcag_aa_console_text_matrix_passes_light_theme() {
+    // HEM-05 adds a light theme; its text tokens must also clear WCAG AA (4.5:1)
+    // against the light surfaces.
+    let pairs = [
+        ("ink-1/surface-0", "#1b2027", "#fbfcfd"),
+        ("ink-2/surface-0", "#47505c", "#fbfcfd"),
+        ("ink-3/surface-0", "#5c6673", "#fbfcfd"),
+        ("ink-1/surface-1", "#1b2027", "#f2f4f7"),
+        ("ink-2/surface-1", "#47505c", "#f2f4f7"),
+        ("ink-3/surface-1", "#5c6673", "#f2f4f7"),
+        ("interactive/surface-0", "#2f5fb0", "#fbfcfd"),
+        ("interactive/surface-1", "#2f5fb0", "#f2f4f7"),
+    ];
+    for (name, foreground, background) in pairs {
+        assert!(
+            contrast(foreground, background) >= 4.5,
+            "light {name} is only {:.2}:1",
+            contrast(foreground, background)
+        );
+    }
+    // The light token block must actually be present in the stylesheet.
+    let css = read("src/main.rs");
+    assert!(css.contains("prefers-color-scheme: light"));
+    assert!(css.contains(":root[data-theme=\"light\"]"));
 }
 
 #[test]

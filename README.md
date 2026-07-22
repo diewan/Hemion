@@ -8,8 +8,14 @@ routes and stored data are not migrated by this navigation refactor.
 
 ## Information architecture
 
-- **Console home** (`/`) identifies the local verifier boundary and exposes only
-  capabilities that work today.
+- **Portfolio of mandates** (`/`) is the default home (HEM-05): mandates grouped
+  by accountable entity and state, with the anchored-vs-buffered split per tile.
+  Cards are projected from real Piteka mandate-chain reads loaded by id — none are
+  simulated — and the local-verifier boundary is carried as a badge. With nothing
+  loaded it shows an explicit empty state.
+- **Developer console** (`/console`) identifies the local verifier boundary and
+  exposes the local inspection tools. It is still reachable; it is no longer the
+  default entry point.
 - **Anchoring** (`/anchoring`) is a first-class console capability, peer to local
   bundle verification rather than a wallet feature: pick a Parwana-configured
   network (projected from `parwana/chains/*.toml`) and attempt to anchor a bundle
@@ -37,9 +43,14 @@ routes and stored data are not migrated by this navigation refactor.
   page (HEM-03): summary → canonical bytes → relationships, cross-linked along the
   evidence DAG. The pages reuse the existing inspectors as the canonical-byte
   decoders rather than replacing them; withheld/redacted fields stay protected.
-- **Legacy wallet** (`/wallet`) retains the previous wallet dashboard. Assets,
-  activity, contacts, and settings keep their existing routes beneath that area.
-  The chain services that back Anchoring are no longer quarantined here.
+- **Wallet** (`/wallet`) retains the previous wallet dashboard. Assets, activity,
+  contacts, and settings keep their existing routes beneath that area. It is
+  preserved but, as of HEM-05, no longer framed as a second-class "legacy" tool;
+  the chain services that back Anchoring are no longer quarantined here.
+
+The design system is dark-first with a light theme served when the viewer prefers
+it (and an explicit `data-theme` on the root wins either way); both themes clear
+the WCAG-AA text-contrast matrix enforced by `tests/console_shell.rs`.
 - Bundle verification, assurance inspection, and object inspection are the
   remaining Stage 7 console screens. They are deliberately absent from
   navigation until their implementation tickets are complete.

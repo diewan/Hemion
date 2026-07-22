@@ -8,9 +8,9 @@
 //! This module owns the **network read model**: the selectable set of chains is
 //! projected from the canonical Parwana chain specs (`parwana/chains/*.toml`),
 //! embedded at build time so the projection is identical on native and the wasm
-//! web bundle (no filesystem, no RPC at import). The extraction mirrors
-//! `csv_runtime::chain_discovery::ChainDiscovery::load_from_toml`: fields are
-//! read out of a `toml::Value` rather than bound to one Rust struct, because the
+//! web bundle (no filesystem, no RPC at import). The extraction mirrors the
+//! csv-runtime chain-discovery loader: fields are read out of a `toml::Value`
+//! rather than bound to one Rust struct, because the
 //! spec's `[rpc_policy]` / `[finality_guarantee]` / `[capabilities]` blocks do
 //! not match a single serde type.
 //!

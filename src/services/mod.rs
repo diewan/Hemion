@@ -15,6 +15,7 @@ pub mod object_model;
 pub mod observation;
 pub mod piteka;
 pub mod platform;
+pub mod portfolio;
 pub mod rpc_settings;
 pub mod search;
 pub mod subscription;
