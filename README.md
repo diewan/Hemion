@@ -17,6 +17,12 @@ routes and stored data are not migrated by this navigation refactor.
   backing is delivered by **ANCHOR-01**; until it lands, the anchor and verify
   actions render an explicit *unavailable* state naming that dependency — Hemion
   never fabricates an anchor or finality.
+- **Tuppira explorer** (`/explorer/tuppira`) traces observation lineage. Each
+  traced object shows **dual-lane finality** (HEM-02): a *buffered* lane
+  (present/absent in the observation plane, immediate) beside an *anchored* lane
+  (none / pending / final). The anchored lane reflects real chain finality only —
+  a pending or unknown read is never rendered as final — and shows an explicit
+  *unavailable* state until ANCHOR-01 supplies a chain finality source.
 - **Legacy wallet** (`/wallet`) retains the previous wallet dashboard. Assets,
   activity, contacts, and settings keep their existing routes beneath that area.
   The chain services that back Anchoring are no longer quarantined here.

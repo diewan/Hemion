@@ -1,5 +1,6 @@
 //! G-08 — Tuppira discovery with local verification of selected evidence.
 
+use crate::components::finality_lanes::{AnchoredFinality, FinalityLanes, FinalityLanesView};
 use crate::services::bundle_verifier::disposition_label;
 use crate::services::tuppira::{
     LiveTuppiraApi, ObservationProjection, TuppiraEnvironment, discover, verify_selected,
@@ -112,6 +113,13 @@ pub fn TuppiraExplorer() -> Element {
                                     p { "Source: {item.source_id} · {item.source_event_type}" }
                                     p { "Normalized digest: " code { "{item.normalized_payload_digest}" } }
                                     p { "Recorded elsewhere · not locally verified" }
+                                    // Dual-lane finality: the object is present in the
+                                    // observation (buffered) plane; the anchored lane has
+                                    // no real chain finality source until ANCHOR-01, so it
+                                    // renders an explicit unavailable state — never final.
+                                    FinalityLanesView {
+                                        lanes: FinalityLanes::new(true, AnchoredFinality::unavailable()),
+                                    }
                                     button {
                                         class: "console-action",
                                         r#type: "button",

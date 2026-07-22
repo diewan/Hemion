@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HEM-02** — the trace view now shows **dual-lane finality**. A new
+  `components::finality_lanes` module models a *buffered* lane (present/absent in
+  the observation plane) beside an *anchored* lane (`none` / `pending` / `final` /
+  `unavailable`), and `FinalityLanesView` renders both on each Tuppira-explorer
+  lineage item. The finality decision lives in a single gate,
+  `AnchoredFinality::from_chain_read`, which reaches `Final` only when the
+  observed confirmation depth meets a positive reorg-safe required depth — a
+  shallow, zero-requirement, or unknown read stays `pending` and is never shown
+  as final. The real chain finality source is ANCHOR-01; until it lands the
+  anchored lane renders an explicit unavailable state. Component tests cover every
+  lane-state combination including the pending and below-depth cases.
 - **HEM-01** — the chain layer is now a first-class **Anchoring** capability in
   the primary console navigation, no longer quarantined under "Legacy wallet".
   A new `services::anchoring` module projects the selectable networks from the

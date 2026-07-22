@@ -149,6 +149,16 @@ const GLOBAL_CSS: &str = r#"
 .dispute-alert { border: 2px solid var(--rule); background: var(--surface-1); padding: .75rem; }
 .dispute-alert h2 { margin: 0; font-size: 1rem; } .dispute-alert strong { display: block; font-size: 1.5rem; }
 .dispute-gap { border-color: #d6a85f; } .dispute-withheld { border-color: #a9b1bc; border-style: dashed; } .dispute-conflict { border-color: #ef8f9c; }
+.finality-lanes { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: .5rem 0; }
+.finality-lane { display: flex; flex-direction: column; gap: .125rem; border: 1px solid var(--rule); background: var(--surface-1); padding: .5rem; }
+.finality-lane-name { font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2); }
+.finality-lane-state { font-weight: 600; font-variant: small-caps; }
+.finality-lane-detail { font-size: .8125rem; color: var(--ink-2); }
+.finality-lane-anchored[data-state="final"] { border-color: var(--interactive); }
+.finality-lane-anchored[data-state="pending"] { border-color: #d6a85f; border-style: dashed; }
+.finality-lane-anchored[data-state="unavailable"], .finality-lane-anchored[data-state="none"] { border-color: #a9b1bc; border-style: dashed; }
+.finality-lane-buffered[data-state="present"] { border-color: var(--interactive); }
+.finality-lane-buffered[data-state="absent"] { border-color: #a9b1bc; border-style: dashed; }
 .dispute-controls { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
 .dispute-controls fieldset { border: 0; margin: 0; padding: 0; } .dispute-controls .console-action { margin-right: .375rem; }
 .dispute-controls [aria-pressed="true"] { color: var(--surface-0); background: var(--interactive); }
