@@ -62,6 +62,43 @@ pub struct SourceHealth {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct EntityProjection {
+    pub entity_id: String,
+    pub entity_kind: String,
+    pub display_name: String,
+    pub profile_digest: String,
+    pub updated_at: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EntityReferenceProjection {
+    pub kind: String,
+    pub disclosure_state: String,
+    pub object_id: Option<String>,
+    pub source_observation_id: Option<String>,
+    pub observed_at: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EntityRelationshipProjection {
+    pub kind: String,
+    pub disclosure_state: String,
+    pub related_entity_id: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EntityAggregateProjection {
+    pub entity: EntityProjection,
+    pub references: Vec<EntityReferenceProjection>,
+    pub relationships: Vec<EntityRelationshipProjection>,
+    pub semantics: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ApiResponse<T> {
     data: T,
     success: bool,
@@ -97,6 +134,12 @@ pub trait TuppiraApiPort {
         &self,
         request: AuthorizedGet,
     ) -> Result<Vec<SourceHealth>, TuppiraConnectionError>;
+    async fn get_entity(
+        &self,
+        _request: AuthorizedGet,
+    ) -> Result<EntityAggregateProjection, TuppiraConnectionError> {
+        Err(TuppiraConnectionError::Api("entity API unavailable".into()))
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -162,6 +205,14 @@ impl TuppiraApiPort for LiveTuppiraApi {
             return Err(TuppiraConnectionError::MalformedProjection);
         }
         validate_health(response.data)
+    }
+
+    async fn get_entity(
+        &self,
+        request: AuthorizedGet,
+    ) -> Result<EntityAggregateProjection, TuppiraConnectionError> {
+        let response: ApiResponse<EntityAggregateProjection> = native_get(request).await?;
+        validate_entity_response(response)
     }
 }
 
@@ -239,6 +290,13 @@ impl TuppiraApiPort for LiveTuppiraApi {
         }
         validate_health(response.data)
     }
+    async fn get_entity(
+        &self,
+        request: AuthorizedGet,
+    ) -> Result<EntityAggregateProjection, TuppiraConnectionError> {
+        let response: ApiResponse<EntityAggregateProjection> = wasm_get(request).await?;
+        validate_entity_response(response)
+    }
 }
 
 impl TuppiraEnvironment {
@@ -279,6 +337,20 @@ impl TuppiraEnvironment {
     pub fn list_request(&self, limit: u32) -> Result<AuthorizedGet, TuppiraConnectionError> {
         self.request(&format!("/api/v1/observations?limit={limit}"))
     }
+
+    pub fn entity_request(&self, entity_id: &str) -> Result<AuthorizedGet, TuppiraConnectionError> {
+        validate_identifier(entity_id)
+            .map_err(|_| TuppiraConnectionError::MalformedObservationId)?;
+        self.request(&format!("/api/v1/entities/{entity_id}/accountability"))
+    }
+}
+
+pub async fn fetch_entity<P: TuppiraApiPort>(
+    api: &P,
+    environment: &TuppiraEnvironment,
+    entity_id: &str,
+) -> Result<EntityAggregateProjection, TuppiraConnectionError> {
+    api.get_entity(environment.entity_request(entity_id)?).await
 }
 
 /// Fetch the most recent observations for the live explorer feed. The response
@@ -361,6 +433,30 @@ fn validate_health(
         return Err(TuppiraConnectionError::MalformedProjection);
     }
     Ok(records)
+}
+
+fn validate_entity_response(
+    response: ApiResponse<EntityAggregateProjection>,
+) -> Result<EntityAggregateProjection, TuppiraConnectionError> {
+    let value = response.data;
+    let valid_disclosure = |state: &str| matches!(state, "available" | "incomplete" | "withheld");
+    if !response.success
+        || value.semantics != "observational_not_authorization"
+        || validate_identifier(&value.entity.entity_id).is_err()
+        || value.entity.profile_digest.len() != 64
+        || hex::decode(&value.entity.profile_digest).is_err()
+        || value.references.iter().any(|item| {
+            !valid_disclosure(&item.disclosure_state)
+                || (item.disclosure_state == "available") != item.object_id.is_some()
+        })
+        || value.relationships.iter().any(|item| {
+            !valid_disclosure(&item.disclosure_state)
+                || (item.disclosure_state == "available") != item.related_entity_id.is_some()
+        })
+    {
+        return Err(TuppiraConnectionError::MalformedProjection);
+    }
+    Ok(value)
 }
 
 fn validate_identifier(value: &str) -> Result<(), ()> {
@@ -479,6 +575,53 @@ mod tests {
         assert_eq!(
             require_disclosed_digest(&observation(&"cd".repeat(32)), &graph),
             Err(TuppiraConnectionError::EvidenceNotDisclosed)
+        );
+    }
+
+    #[test]
+    fn entity_projection_rejects_authorization_claims_and_implicit_withholding() {
+        let entity = EntityAggregateProjection {
+            entity: EntityProjection {
+                entity_id: "org:1".into(),
+                entity_kind: "organization".into(),
+                display_name: "Org One".into(),
+                profile_digest: "ab".repeat(32),
+                updated_at: 1,
+            },
+            references: vec![EntityReferenceProjection {
+                kind: "mandate".into(),
+                disclosure_state: "withheld".into(),
+                object_id: None,
+                source_observation_id: None,
+                observed_at: 1,
+            }],
+            relationships: vec![],
+            semantics: "observational_not_authorization".into(),
+        };
+        assert!(
+            validate_entity_response(ApiResponse {
+                data: entity.clone(),
+                success: true
+            })
+            .is_ok()
+        );
+        let mut overclaim = entity.clone();
+        overclaim.semantics = "authorized".into();
+        assert_eq!(
+            validate_entity_response(ApiResponse {
+                data: overclaim,
+                success: true
+            }),
+            Err(TuppiraConnectionError::MalformedProjection)
+        );
+        let mut leaked = entity;
+        leaked.references[0].object_id = Some("hidden-mandate".into());
+        assert_eq!(
+            validate_entity_response(ApiResponse {
+                data: leaked,
+                success: true
+            }),
+            Err(TuppiraConnectionError::MalformedProjection)
         );
     }
 }

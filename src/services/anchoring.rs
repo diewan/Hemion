@@ -107,9 +107,7 @@ fn read_capable_rpc_urls(value: &toml::Value) -> Vec<String> {
                     endpoint
                         .get("capabilities")
                         .and_then(toml::Value::as_array)
-                        .is_some_and(|caps| {
-                            caps.iter().any(|cap| cap.as_str() == Some("read"))
-                        })
+                        .is_some_and(|caps| caps.iter().any(|cap| cap.as_str() == Some("read")))
                 })
                 .filter_map(|endpoint| {
                     endpoint
@@ -320,7 +318,11 @@ mod tests {
             "read-capable rpc url projected: {:?}",
             net.rpc_urls
         );
-        assert!(net.block_explorer_urls.iter().any(|u| u.contains("etherscan")));
+        assert!(
+            net.block_explorer_urls
+                .iter()
+                .any(|u| u.contains("etherscan"))
+        );
         assert_eq!(net.finality.proof_system.as_deref(), Some("EthereumPos"));
         assert_eq!(net.finality.max_reorg_depth, Some(12));
         assert_eq!(net.finality.deterministic_finality, Some(true));

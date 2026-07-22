@@ -1,11 +1,17 @@
 //! G-08 — Tuppira discovery with local verification of selected evidence.
 
+use std::time::Duration;
+
 use crate::components::finality_lanes::{AnchoredFinality, FinalityLanes, FinalityLanesView};
 use crate::services::bundle_verifier::disposition_label;
 use crate::services::tuppira::{
-    LiveTuppiraApi, ObservationProjection, TuppiraEnvironment, discover, verify_selected,
+    LiveTuppiraApi, ObservationProjection, TuppiraEnvironment, discover, list_observations,
+    verify_selected,
 };
 use dioxus::prelude::*;
+
+const FEED_LIMIT: u32 = 50;
+const POLL_SECONDS: u64 = 3;
 
 #[component]
 pub fn TuppiraExplorer() -> Element {
@@ -19,11 +25,43 @@ pub fn TuppiraExplorer() -> Element {
             .to_string()
     });
     let mut lineage = use_signal(Vec::<ObservationProjection>::new);
+    let mut feed = use_signal(Vec::<ObservationProjection>::new);
+    let mut feed_status = use_signal(|| None::<String>);
     let mut source_health = use_signal(Vec::<crate::services::tuppira::SourceHealth>::new);
     let mut selected = use_signal(|| None::<ObservationProjection>);
     let mut bundle = use_signal(String::new);
     let mut context = use_signal(String::new);
     let mut status = use_signal(|| None::<String>);
+
+    // Keep the discovery feed live. The lineage inspector below remains an
+    // explicit exact-id query, while this feed makes newly ingested receipts
+    // visible without requiring users to know or paste their observation ids.
+    use_hook(move || {
+        spawn(async move {
+            loop {
+                let environment = TuppiraEnvironment {
+                    api_base_url: api_url.peek().clone(),
+                    tenant_id: tenant_id.peek().clone(),
+                    access_token: access_token.peek().clone(),
+                };
+                if !environment.api_base_url.is_empty() {
+                    match list_observations(&LiveTuppiraApi, &environment, FEED_LIMIT).await {
+                        Ok(items) => {
+                            let count = items.len();
+                            feed.set(items);
+                            feed_status.set(Some(format!(
+                                "Live · {count} observation(s) · refreshes every {POLL_SECONDS}s."
+                            )));
+                        }
+                        Err(error) => {
+                            feed_status.set(Some(format!("Feed unavailable · {error}")));
+                        }
+                    }
+                }
+                crate::services::platform::sleep(Duration::from_secs(POLL_SECONDS)).await;
+            }
+        });
+    });
 
     // Demo convenience: when the page opens with pre-filled values, run
     // discovery once so the Piteka→Tuppira trace loads without extra clicks.
@@ -85,6 +123,33 @@ pub fn TuppiraExplorer() -> Element {
                 });
             }, "Discover and trace" }
             if let Some(message) = status() { output { class: "console-notice", aria_live: "polite", "{message}" } }
+
+            section { class: "console-panel", aria_labelledby: "live-feed-title",
+                h2 { id: "live-feed-title", "Live feed" }
+                if let Some(message) = feed_status() {
+                    output { class: "console-notice", aria_live: "polite", "{message}" }
+                }
+                if feed().is_empty() {
+                    p { class: "console-limitation", "No observations yet. New receipts appear here automatically after ingestion." }
+                } else {
+                    ol {
+                        for item in feed().iter() {
+                            li {
+                                button {
+                                    class: "console-action",
+                                    r#type: "button",
+                                    onclick: {
+                                        let id = item.observation_id.clone();
+                                        move |_| observation_id.set(id.clone())
+                                    },
+                                    "{item.source_event_type} · {item.observation_id}"
+                                }
+                            }
+                        }
+                    }
+                    p { class: "console-limitation", "Select an observation, then choose Discover and trace to load its lineage." }
+                }
+            }
 
             section { class: "console-panel", aria_labelledby: "source-health-title",
                 h2 { id: "source-health-title", "Source health" }

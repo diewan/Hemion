@@ -22,6 +22,8 @@ pub enum Route {
     // Deep-linkable object detail page per accountability object type (HEM-03).
     #[route("/object/:kind/:id")]
     ObjectPage { kind: String, id: String },
+    #[route("/entities/:entity_id")]
+    EntityProfile { entity_id: String },
     #[route("/disputes")]
     DisputeInspector {},
     #[route("/fixtures")]

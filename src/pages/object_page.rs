@@ -89,6 +89,14 @@ pub fn ObjectPage(kind: String, id: String) -> Element {
                         "Open {resolved.display_name()} inspector"
                     }
                 }
+
+                article { class: "console-panel", aria_labelledby: "object-responsibility",
+                    h2 { id: "object-responsibility", "Accountable entity" }
+                    strong { "Indeterminate" }
+                    p { class: "console-limitation",
+                        "This deep link does not contain a disclosed delegation chain. Hemion will not infer responsibility from an executor or display name. Load the trace or open an entity profile to resolve explicit authority."
+                    }
+                }
             }
 
             section { class: "console-panel", aria_labelledby: "object-relationships",

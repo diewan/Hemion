@@ -106,26 +106,65 @@ impl AccountabilityObjectKind {
         use AccountabilityObjectKind::{Action, Anchor, Assurance, Dispute, Mandate, Receipt};
         match self {
             Self::Mandate => &[
-                Relationship { label: "authorizes", kind: Action },
-                Relationship { label: "corroborated by", kind: Anchor },
-                Relationship { label: "receipted by", kind: Receipt },
+                Relationship {
+                    label: "authorizes",
+                    kind: Action,
+                },
+                Relationship {
+                    label: "corroborated by",
+                    kind: Anchor,
+                },
+                Relationship {
+                    label: "receipted by",
+                    kind: Receipt,
+                },
             ],
             Self::Action => &[
-                Relationship { label: "under mandate", kind: Mandate },
-                Relationship { label: "produces", kind: Receipt },
+                Relationship {
+                    label: "under mandate",
+                    kind: Mandate,
+                },
+                Relationship {
+                    label: "produces",
+                    kind: Receipt,
+                },
             ],
             Self::Receipt => &[
-                Relationship { label: "records", kind: Action },
-                Relationship { label: "under mandate", kind: Mandate },
-                Relationship { label: "disputed in", kind: Dispute },
+                Relationship {
+                    label: "records",
+                    kind: Action,
+                },
+                Relationship {
+                    label: "under mandate",
+                    kind: Mandate,
+                },
+                Relationship {
+                    label: "disputed in",
+                    kind: Dispute,
+                },
             ],
             Self::Dispute => &[
-                Relationship { label: "about receipt", kind: Receipt },
-                Relationship { label: "about mandate", kind: Mandate },
-                Relationship { label: "assessed by", kind: Assurance },
+                Relationship {
+                    label: "about receipt",
+                    kind: Receipt,
+                },
+                Relationship {
+                    label: "about mandate",
+                    kind: Mandate,
+                },
+                Relationship {
+                    label: "assessed by",
+                    kind: Assurance,
+                },
             ],
-            Self::Assurance => &[Relationship { label: "assesses", kind: Dispute }],
-            Self::Anchor => &[Relationship { label: "corroborates", kind: Mandate }],
+            Self::Assurance => &[Relationship {
+                label: "assesses",
+                kind: Dispute,
+            }],
+            Self::Anchor => &[Relationship {
+                label: "corroborates",
+                kind: Mandate,
+            }],
         }
     }
 }
@@ -243,8 +282,14 @@ mod tests {
     #[test]
     fn reason_code_preserves_stable_identifier() {
         let display = reason_code_display("ACCOUNTABILITY.AUTHORITY.INTENT_MISMATCH");
-        assert_eq!(display.stable_id, "ACCOUNTABILITY.AUTHORITY.INTENT_MISMATCH");
-        assert_eq!(display.namespace.as_deref(), Some("ACCOUNTABILITY.AUTHORITY"));
+        assert_eq!(
+            display.stable_id,
+            "ACCOUNTABILITY.AUTHORITY.INTENT_MISMATCH"
+        );
+        assert_eq!(
+            display.namespace.as_deref(),
+            Some("ACCOUNTABILITY.AUTHORITY")
+        );
         assert_eq!(display.terminal, "INTENT_MISMATCH");
     }
 
@@ -258,7 +303,11 @@ mod tests {
         let withheld = FieldDisclosure::Withheld;
         assert!(withheld.is_protected());
         // The protected marker must not claim the field is empty/absent.
-        assert!(withheld.display().contains("does not mean the field is empty"));
+        assert!(
+            withheld
+                .display()
+                .contains("does not mean the field is empty")
+        );
 
         let shown = FieldDisclosure::Disclosed("abc123".to_string());
         assert!(!shown.is_protected());

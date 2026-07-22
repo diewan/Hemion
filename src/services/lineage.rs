@@ -170,9 +170,7 @@ impl LineageGraph {
 /// an observation node, so the graph and its filters have every node class.
 #[must_use]
 pub fn demo_lineage() -> LineageGraph {
-    use LineageNodeType::{
-        Action, Anchor, Assurance, Dispute, Gap, Mandate, Observation, Receipt,
-    };
+    use LineageNodeType::{Action, Anchor, Assurance, Dispute, Gap, Mandate, Observation, Receipt};
     let mut graph = LineageGraph::new();
     graph.add_node("mandate:m1", Mandate, "Deployment mandate");
     graph.add_node("action:a1", Action, "Execution attempt");

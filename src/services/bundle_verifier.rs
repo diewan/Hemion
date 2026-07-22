@@ -397,6 +397,9 @@ fn project_evidence_graph(evidence: &[(EvidenceNodeId, EvidenceNode)]) -> Eviden
             EvidenceKind::Observation { .. } => ("Observation", false),
             EvidenceKind::Attestation { .. } => ("Attestation", false),
             EvidenceKind::EvidenceGap { .. } => ("Evidence gap", true),
+            EvidenceKind::Counterclaim { .. } => ("Counterclaim", false),
+            EvidenceKind::Contradiction { .. } => ("Contradiction", false),
+            EvidenceKind::CustodyRecord { .. } => ("Custody record", false),
         };
         let is_withheld = matches!(
             node.source_locator,

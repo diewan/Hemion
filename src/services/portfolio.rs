@@ -82,12 +82,7 @@ impl MandateCard {
             .attempts
             .first()
             .map(|attempt| attempt.executor_identity.clone())
-            .or_else(|| {
-                chain
-                    .timeline
-                    .iter()
-                    .find_map(|step| step.actor.clone())
-            })
+            .or_else(|| chain.timeline.iter().find_map(|step| step.actor.clone()))
             .filter(|identity| !identity.trim().is_empty())
             .unwrap_or_else(|| "unattributed".to_string());
 
@@ -197,7 +192,9 @@ pub fn portfolio_counts(cards: &[MandateCard]) -> PortfolioCounts {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::piteka::{ChainAttempt, ChainEvidence, MandateChain, MandateDetail, ReceiptDetail};
+    use crate::services::piteka::{
+        ChainAttempt, ChainEvidence, MandateChain, MandateDetail, ReceiptDetail,
+    };
 
     fn chain(id: &str, state: &str, executor: &str, anchored: bool, gap: bool) -> MandateChain {
         MandateChain {
@@ -223,7 +220,11 @@ mod tests {
                 created_at: 0,
                 dispatch_evidence_refs: vec![],
                 target_evidence_refs: vec![],
-                evidence_gaps: if gap { vec!["target".to_string()] } else { vec![] },
+                evidence_gaps: if gap {
+                    vec!["target".to_string()]
+                } else {
+                    vec![]
+                },
             }],
             evidence: if anchored {
                 vec![ChainEvidence {
@@ -242,14 +243,26 @@ mod tests {
 
     #[test]
     fn lifecycle_projects_known_states_and_preserves_unknown() {
-        assert_eq!(MandateLifecycle::from_state("issued"), MandateLifecycle::Active);
-        assert_eq!(MandateLifecycle::from_state("Reserved"), MandateLifecycle::Active);
-        assert_eq!(MandateLifecycle::from_state("consumed"), MandateLifecycle::Consumed);
+        assert_eq!(
+            MandateLifecycle::from_state("issued"),
+            MandateLifecycle::Active
+        );
+        assert_eq!(
+            MandateLifecycle::from_state("Reserved"),
+            MandateLifecycle::Active
+        );
+        assert_eq!(
+            MandateLifecycle::from_state("consumed"),
+            MandateLifecycle::Consumed
+        );
         assert_eq!(
             MandateLifecycle::from_state("quarantined"),
             MandateLifecycle::Quarantined
         );
-        assert_eq!(MandateLifecycle::from_state("weird"), MandateLifecycle::Unknown);
+        assert_eq!(
+            MandateLifecycle::from_state("weird"),
+            MandateLifecycle::Unknown
+        );
     }
 
     #[test]
@@ -262,7 +275,8 @@ mod tests {
         assert!(!anchored.disputed);
 
         // Quarantined OR a receipt gap marks the card disputed; no anchor node.
-        let quarantined = MandateCard::from_chain(&chain("m2", "quarantined", "svc:agent", false, false));
+        let quarantined =
+            MandateCard::from_chain(&chain("m2", "quarantined", "svc:agent", false, false));
         assert!(quarantined.disputed);
         assert!(!quarantined.anchored);
         let gapped = MandateCard::from_chain(&chain("m3", "issued", "svc:agent", false, true));
