@@ -14,12 +14,17 @@ struct Destination {
     route: Route,
 }
 
-fn console_destinations() -> [Destination; 8] {
+fn console_destinations() -> [Destination; 9] {
     [
         Destination {
             label: "Console home",
             icon: "⌁",
             route: Route::ConsoleHome {},
+        },
+        Destination {
+            label: "Anchoring",
+            icon: "⚓",
+            route: Route::Anchoring {},
         },
         Destination {
             label: "Explorer",
@@ -140,14 +145,26 @@ mod tests {
     #[test]
     fn navigation_exposes_only_working_console_screen_and_legacy_wallet() {
         assert_eq!(console_destinations()[0].label, "Console home");
-        assert_eq!(console_destinations()[1].label, "Explorer");
-        assert_eq!(console_destinations()[2].label, "Bundle verifier");
-        assert_eq!(console_destinations()[3].label, "Assurance inspector");
-        assert_eq!(console_destinations()[4].label, "Object inspector");
-        assert_eq!(console_destinations()[5].label, "Dispute inspector");
-        assert_eq!(console_destinations()[6].label, "Fixture lab");
-        assert_eq!(console_destinations()[7].label, "Tuppira explorer");
+        // Anchoring is a first-class console capability, in primary nav rather
+        // than under the legacy wallet (HEM-01).
+        assert_eq!(console_destinations()[1].label, "Anchoring");
+        assert_eq!(console_destinations()[2].label, "Explorer");
+        assert_eq!(console_destinations()[3].label, "Bundle verifier");
+        assert_eq!(console_destinations()[4].label, "Assurance inspector");
+        assert_eq!(console_destinations()[5].label, "Object inspector");
+        assert_eq!(console_destinations()[6].label, "Dispute inspector");
+        assert_eq!(console_destinations()[7].label, "Fixture lab");
+        assert_eq!(console_destinations()[8].label, "Tuppira explorer");
         assert_eq!(wallet_destinations()[0].label, "Legacy wallet");
         assert_eq!(wallet_destinations().len(), 5);
+    }
+
+    #[test]
+    fn anchoring_is_not_under_the_legacy_wallet_group() {
+        assert!(
+            !wallet_destinations().iter().any(|d| d.label == "Anchoring"),
+            "Anchoring must not appear in the legacy wallet group"
+        );
+        assert!(console_destinations().iter().any(|d| d.label == "Anchoring"));
     }
 }

@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HEM-01** — the chain layer is now a first-class **Anchoring** capability in
+  the primary console navigation, no longer quarantined under "Legacy wallet".
+  A new `services::anchoring` module projects the selectable networks from the
+  canonical Parwana chain specs (`parwana/chains/*.toml`, embedded at build time
+  so the list is identical on native and the wasm web bundle and needs no
+  filesystem), de-duplicated by canonical `chain_id`. The `/anchoring` page lets
+  a developer select a network — showing its real read RPC endpoint and finality
+  profile — and run "Anchor this bundle" / "Verify anchor". Because the on-chain
+  commitment/finality protocol backing is **ANCHOR-01** and not yet wired, both
+  actions resolve to an explicit `AnchorAvailability::Unavailable` that names the
+  blocking ticket; there is deliberately no success arm that can be reached
+  without a real adapter, so finality is never fabricated. Legacy wallet routes
+  are untouched. Native unit tests cover the network projection and the
+  unavailable capability matrix, and the module compiles on `wasm32-unknown-unknown`.
 - **DEMO-03** — the dispute inspector now surfaces the independent assurance
   verdict. Paste a bundle plus a hash-bound verification context and run the
   pinned Parwana verifier locally (`import_and_verify`); the assurance dimensions

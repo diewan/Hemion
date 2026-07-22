@@ -1,5 +1,6 @@
 //! External services (explorer, chain APIs, etc.)
 
+pub mod anchoring;
 pub mod application_contract;
 pub mod asset_service;
 pub mod blockchain;

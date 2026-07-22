@@ -10,8 +10,16 @@ routes and stored data are not migrated by this navigation refactor.
 
 - **Console home** (`/`) identifies the local verifier boundary and exposes only
   capabilities that work today.
+- **Anchoring** (`/anchoring`) is a first-class console capability, peer to local
+  bundle verification rather than a wallet feature: pick a Parwana-configured
+  network (projected from `parwana/chains/*.toml`) and attempt to anchor a bundle
+  or verify an existing anchor. The on-chain commitment / finality protocol
+  backing is delivered by **ANCHOR-01**; until it lands, the anchor and verify
+  actions render an explicit *unavailable* state naming that dependency — Hemion
+  never fabricates an anchor or finality.
 - **Legacy wallet** (`/wallet`) retains the previous wallet dashboard. Assets,
   activity, contacts, and settings keep their existing routes beneath that area.
+  The chain services that back Anchoring are no longer quarantined here.
 - Bundle verification, assurance inspection, and object inspection are the
   remaining Stage 7 console screens. They are deliberately absent from
   navigation until their implementation tickets are complete.

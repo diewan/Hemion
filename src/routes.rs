@@ -20,6 +20,8 @@ pub enum Route {
     DisputeInspector {},
     #[route("/fixtures")]
     FixtureLab {},
+    #[route("/anchoring")]
+    Anchoring {},
     #[route("/explorer")]
     Explorer {},
     #[route("/explorer/tuppira")]
