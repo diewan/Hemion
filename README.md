@@ -6,6 +6,50 @@ locally without treating a verdict recorded by another product as authoritative.
 The existing multi-chain wallet remains available under **Legacy wallet**; its
 routes and stored data are not migrated by this navigation refactor.
 
+## Topology
+
+Where Hemion sits in the DieWan Accountability Platform:
+
+```mermaid
+flowchart TB
+  PAR["Parwana · protocol<br/>canonical bytes · verifier · SDK"]
+  PIT["Piteka · product<br/>authorize · execute · investigate · Postgres live state"]
+  TUP["Tuppira · data plane<br/>observe · index · read model"]
+  HEM["Hemion · developer console<br/>explorer · local verifier · wallet"]
+  CON["csv-contracts · chain anchors<br/>optional anchor provider"]
+
+  PIT -->|uses protocol + verifier| PAR
+  PIT -->|signed evidence feed| TUP
+  TUP -->|read model| HEM
+  HEM -->|verifies locally| PAR
+  PAR -.->|anchors commitments| CON
+  TUP -.->|observes anchors| CON
+
+  classDef here fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
+  class HEM here;
+```
+
+**You are here — Hemion**, the developer console. It reads the
+[Tuppira](../tuppira) read model to explore accountability objects and runs the
+[Parwana](../parwana) verifier *locally* — it never trusts a verdict just because
+[Piteka](../piteka) or Tuppira recorded it. See the org charter in
+[`development/ARCHITECTURE.md`](../development/ARCHITECTURE.md).
+
+## Glossary
+
+Key terms a newcomer will meet in Hemion:
+
+| Term | Kind | Plain-English meaning | Real-world example |
+|------|------|-----------------------|--------------------|
+| Mandate | Data structure | A pre-action authorization artifact Hemion loads and inspects. | A signed work order approving one specific deployment. |
+| Receipt | Data structure | Evidence of what actually happened, bound to its mandate. | A deploy log entry that proves it came from that approval. |
+| Bundle | Data structure | A packaged set of evidence Hemion verifies locally. | An evidence folder you re-check yourself instead of trusting the sender. |
+| Assurance | Data structure | The structured result of verifying a bundle — a graded conclusion, not a raw pass/fail. | An audit report with findings and a conclusion. |
+| Dispute | Data structure | A recorded challenge to an action, receipt, or verdict. | A credit-card chargeback contesting a transaction. |
+| Anchor | Keyword | A commitment published on a chain; Hemion can anchor a bundle or verify an existing anchor. | A notary stamp proving a document existed by a certain date. |
+| Finality | Keyword | Whether an object is settled on chain (*anchored*) versus merely seen in the data plane (*buffered*) — Hemion shows both lanes. | "Confirmed by the postal service" vs. "delivered per our records." |
+| Lineage | Keyword | The walkable chain mandate → action → receipt → dispute → verdict → anchor. | A family tree of an event, navigable in both directions. |
+
 ## Information architecture
 
 - **Portfolio of mandates** (`/`) is the default home (HEM-05): mandates grouped
