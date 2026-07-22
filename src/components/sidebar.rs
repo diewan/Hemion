@@ -14,12 +14,17 @@ struct Destination {
     route: Route,
 }
 
-fn console_destinations() -> [Destination; 9] {
+fn console_destinations() -> [Destination; 10] {
     [
         Destination {
             label: "Console home",
             icon: "⌁",
             route: Route::ConsoleHome {},
+        },
+        Destination {
+            label: "Search",
+            icon: "⌕",
+            route: Route::Search {},
         },
         Destination {
             label: "Anchoring",
@@ -145,16 +150,17 @@ mod tests {
     #[test]
     fn navigation_exposes_only_working_console_screen_and_legacy_wallet() {
         assert_eq!(console_destinations()[0].label, "Console home");
-        // Anchoring is a first-class console capability, in primary nav rather
-        // than under the legacy wallet (HEM-01).
-        assert_eq!(console_destinations()[1].label, "Anchoring");
-        assert_eq!(console_destinations()[2].label, "Explorer");
-        assert_eq!(console_destinations()[3].label, "Bundle verifier");
-        assert_eq!(console_destinations()[4].label, "Assurance inspector");
-        assert_eq!(console_destinations()[5].label, "Object inspector");
-        assert_eq!(console_destinations()[6].label, "Dispute inspector");
-        assert_eq!(console_destinations()[7].label, "Fixture lab");
-        assert_eq!(console_destinations()[8].label, "Tuppira explorer");
+        // Universal search (HEM-04) and Anchoring (HEM-01) are first-class console
+        // capabilities, in primary nav rather than under the legacy wallet.
+        assert_eq!(console_destinations()[1].label, "Search");
+        assert_eq!(console_destinations()[2].label, "Anchoring");
+        assert_eq!(console_destinations()[3].label, "Explorer");
+        assert_eq!(console_destinations()[4].label, "Bundle verifier");
+        assert_eq!(console_destinations()[5].label, "Assurance inspector");
+        assert_eq!(console_destinations()[6].label, "Object inspector");
+        assert_eq!(console_destinations()[7].label, "Dispute inspector");
+        assert_eq!(console_destinations()[8].label, "Fixture lab");
+        assert_eq!(console_destinations()[9].label, "Tuppira explorer");
         assert_eq!(wallet_destinations()[0].label, "Legacy wallet");
         assert_eq!(wallet_destinations().len(), 5);
     }

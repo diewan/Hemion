@@ -25,6 +25,8 @@ pub enum Route {
     FixtureLab {},
     #[route("/anchoring")]
     Anchoring {},
+    #[route("/search")]
+    Search {},
     #[route("/explorer")]
     Explorer {},
     #[route("/explorer/tuppira")]

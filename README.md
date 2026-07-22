@@ -23,6 +23,15 @@ routes and stored data are not migrated by this navigation refactor.
   (none / pending / final). The anchored lane reflects real chain finality only —
   a pending or unknown read is never rendered as final — and shows an explicit
   *unavailable* state until ANCHOR-01 supplies a chain finality source.
+- **Universal search** (`/search`) classifies one query — mandate, receipt,
+  action, dispute, assurance, anchor, accountable entity, chain tx, or an
+  `environments/<env>/receipts/<id>` path — and routes it to the right object
+  (HEM-04). A bare digest is reported as ambiguous with candidate kinds and is
+  never routed to a wrong object; unknown queries return an explicit no-match.
+  The page also renders a lineage graph that walks mandate → action → receipt →
+  dispute → verdict → anchor in both directions, with node-type filters and a
+  keyboard-accessible mirror table. Graph shape is structure, not truth, and
+  withheld branches show as explicit gaps.
 - **Object pages** (`/object/<kind>/<id>`) give each accountability object type —
   mandate, action, receipt, dispute, assurance, anchor — a deep-linkable detail
   page (HEM-03): summary → canonical bytes → relationships, cross-linked along the

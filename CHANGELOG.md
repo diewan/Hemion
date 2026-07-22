@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HEM-04** — a universal accountability search and lineage graph. A new pure
+  `services::search` classifies a query (typed `mandate:`/`receipt:`/`action:`/
+  `dispute:`/`assurance:`/`anchor:` digests, `entity:`, `tx:`, or an
+  `environments/<env>/receipts/<id>` path) and routes it to the correct object
+  page — a bare digest resolves to an explicit *ambiguous* state with candidate
+  kinds rather than guessing, and anything unrecognized is a clear *no-match*, so
+  a query never routes to a wrong object. A new pure `services::lineage` models a
+  directed graph walked in both directions with node-type filters and a gap as a
+  first-class node (withheld/missing branches are never silently omitted; the
+  model exposes no centrality). The `/search` page renders the resolver result, a
+  node-type-filtered lineage graph, and a keyboard-accessible mirror table. Search
+  is a first-class console nav item. Resolver/graph unit tests per identifier type
+  and both-direction traversal; native + wasm32 build green.
 - **HEM-03** — each accountability object type now has a deep-linkable object
   page at `/object/<kind>/<id>` (mandate, action, receipt, dispute, assurance,
   anchor). A new pure `services::object_model` names the kinds, their stable

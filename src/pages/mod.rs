@@ -26,6 +26,7 @@ pub mod fixture_lab;
 pub mod object_inspector;
 pub mod object_page;
 pub mod piteka_environment;
+pub mod search;
 pub mod tuppira_explorer;
 
 // NFT and Wallet pages (already separate files)
@@ -55,6 +56,7 @@ pub use fixture_lab::FixtureLab;
 pub use nft_page::{NftCollections, NftDetail, NftGallery};
 pub use object_inspector::ObjectInspector;
 pub use object_page::ObjectPage;
+pub use search::Search;
 pub use piteka_environment::PitekaEnvironmentReceipt;
 pub use tuppira_explorer::TuppiraExplorer;
 pub use wallet_page::WalletPage;

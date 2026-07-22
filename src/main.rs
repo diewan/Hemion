@@ -165,6 +165,18 @@ const GLOBAL_CSS: &str = r#"
 .object-rel-link { color: var(--interactive); text-decoration: none; font-weight: 600; }
 .object-rel-link:hover, .object-rel-link:focus-visible { text-decoration: underline; }
 .object-id { overflow-wrap: anywhere; }
+.search-form { display: flex; gap: .5rem; margin: 1rem 0; flex-wrap: wrap; }
+.search-form input { flex: 1 1 20rem; }
+.search-result { margin: 1rem 0; }
+.search-filters { border: 0; margin: .5rem 0; padding: 0; display: flex; flex-wrap: wrap; gap: .375rem; align-items: center; }
+.search-filters legend { font-size: .8125rem; color: var(--ink-2); padding: 0 .5rem 0 0; }
+.search-filters [aria-pressed="true"] { color: var(--surface-0); background: var(--interactive); }
+.lineage-table { width: 100%; border-collapse: collapse; margin-top: .75rem; font-size: .875rem; }
+.lineage-table caption { text-align: left; color: var(--ink-2); font-size: .8125rem; margin-bottom: .375rem; }
+.lineage-table th, .lineage-table td { border: 1px solid var(--rule); padding: .5rem; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.lineage-table thead th { background: var(--surface-2); }
+.lineage-links { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
+.lineage-node-title { color: var(--ink-2); }
 .dispute-controls { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
 .dispute-controls fieldset { border: 0; margin: 0; padding: 0; } .dispute-controls .console-action { margin-right: .375rem; }
 .dispute-controls [aria-pressed="true"] { color: var(--surface-0); background: var(--interactive); }
