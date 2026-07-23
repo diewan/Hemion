@@ -521,6 +521,7 @@ mod tests {
         assert!(value.receipt_export_request("receipt-42").is_ok());
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     #[tokio::test]
     async fn downloaded_malformed_objects_fail_local_verification() {
         let api = RecordingApi {
@@ -539,6 +540,7 @@ mod tests {
         assert!(api.request.borrow().is_some());
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     #[tokio::test]
     async fn cross_receipt_response_is_rejected_before_verification() {
         let api = RecordingApi {

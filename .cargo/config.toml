@@ -4,3 +4,14 @@
 [target.x86_64-unknown-linux-gnu]
 linker = "/usr/bin/cc"
 ar = "/usr/bin/ar"
+
+# `secp256k1-sys` compiles bundled C for browser WASM. A host-wide Conda `CC`
+# or x86 `CFLAGS` otherwise produces unresolved `env` imports that pass
+# `cargo check` but crash the generated JavaScript module in a real browser.
+# Pin the WASM C toolchain and make Cargo builds independent of those ambient
+# host flags. Native Rust release optimization remains controlled by Cargo
+# profiles, not CFLAGS.
+[env]
+CC_wasm32_unknown_unknown = { value = "/usr/bin/clang", force = true }
+AR_wasm32_unknown_unknown = { value = "/usr/bin/ar", force = true }
+CFLAGS = { value = "", force = true }

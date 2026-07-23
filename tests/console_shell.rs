@@ -100,6 +100,8 @@ fn wcag_aa_console_text_matrix_passes_light_theme() {
     let css = read("src/main.rs");
     assert!(css.contains("prefers-color-scheme: light"));
     assert!(css.contains(":root[data-theme=\"light\"]"));
+    assert!(css.contains("background: var(--surface-0, #14171c)"));
+    assert!(css.contains(".app-shell { height: 100vh; overflow: hidden; background: var(--surface-0); color: var(--ink-1); }"));
 }
 
 #[test]

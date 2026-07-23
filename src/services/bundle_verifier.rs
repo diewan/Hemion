@@ -196,6 +196,9 @@ pub fn verify_locally(
             algorithm_status: choice.algorithm_status,
             replay_status: choice.replay_status,
             single_use_anchor: bundle.single_use_anchor.as_ref(),
+            preservation_envelopes: &[],
+            preservation_authenticity: &[],
+            preservation_algorithm_statuses: &[],
         },
     )
     .map_err(|_| LocalVerificationError::ContextInvalid)?;
@@ -533,7 +536,9 @@ pub const fn disposition_label(disposition: VerificationDisposition) -> &'static
 
 #[cfg(test)]
 mod inspector_tests {
-    use super::{LocalVerificationError, inspect_bundle, project_evidence_graph};
+    use super::{
+        LocalVerificationError, inspect_bundle, project_evidence_graph, validate_import_bytes,
+    };
     use csv_sdk::accountability::{EvidenceKind, EvidenceNode, SourceLocator};
 
     #[test]
@@ -544,6 +549,34 @@ mod inspector_tests {
         ));
         assert!(matches!(
             inspect_bundle(br#"{"format":"unsupported"}"#),
+            Err(LocalVerificationError::UnsupportedBundleEncoding)
+        ));
+    }
+
+    #[test]
+    fn hostile_xml_attributes_never_reach_an_xml_parser() {
+        let mut input = String::from("<bundle");
+        for index in 0..4_096 {
+            input.push_str(&format!(" attr{index}=\"value\""));
+        }
+        input.push_str("/>");
+
+        assert!(matches!(
+            validate_import_bytes(input.as_bytes()),
+            Err(LocalVerificationError::UnsupportedBundleEncoding)
+        ));
+    }
+
+    #[test]
+    fn hostile_xml_namespaces_never_reach_an_xml_parser() {
+        let mut input = String::from("<bundle");
+        for index in 0..4_096 {
+            input.push_str(&format!(" xmlns:ns{index}=\"urn:diewan:{index}\""));
+        }
+        input.push_str("/>");
+
+        assert!(matches!(
+            validate_import_bytes(input.as_bytes()),
             Err(LocalVerificationError::UnsupportedBundleEncoding)
         ));
     }

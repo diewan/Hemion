@@ -72,7 +72,7 @@ fn App() -> Element {
 
 const CRITICAL_CSS: &str = "
 *, *::before, *::after { box-sizing: border-box; }
-body { min-height: 100vh; margin: 0; padding: 0; background: #14171c; color: #e7eaee; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+body { min-height: 100vh; margin: 0; padding: 0; background: var(--surface-0, #14171c); color: var(--ink-1, #e7eaee); font-family: 'IBM Plex Sans', system-ui, sans-serif; }
 #main { display: block; }
 ";
 
@@ -106,7 +106,7 @@ const GLOBAL_CSS: &str = r#"
 /* Constrain the shell to the viewport so the main content area (overflow-auto)
    becomes the scroll container, instead of the whole document growing past the
    bottom of the window (which left the page unscrollable). */
-.app-shell { height: 100vh; overflow: hidden; }
+.app-shell { height: 100vh; overflow: hidden; background: var(--surface-0); color: var(--ink-1); }
 .instrument-sidebar { width: 16rem; min-height: 100vh; position: sticky; top: 0; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface-1); border-right: 1px solid var(--rule); }
 .instrument-sidebar-closed { width: 4rem; }
 .instrument-brand, .instrument-nav-link, .instrument-nav-tab, .console-action { color: var(--ink-1); text-decoration: none; }
